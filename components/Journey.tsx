@@ -187,7 +187,11 @@ export default function Journey({
         configVersion: EXPERIENCE_CONFIG.version,
         isReturn: false,
       }),
-    }).catch(() => null)
+    })
+      .then((r) => {
+        if (!r.ok) r.json().then((b) => console.error('[contribute]', r.status, b))
+      })
+      .catch((e) => console.error('[contribute]', e))
 
     const [, fetched] = await Promise.all([animDone, voicesFetch])
     goReveal(fetched ?? null)

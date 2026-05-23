@@ -48,8 +48,8 @@
   opacity: 0;
   transform: translateY(8px);
   transition:
-    opacity 0.75s ease,
-    transform 0.75s ease;
+    opacity 0.28s ease,
+    transform 0.28s ease;
 }
 
 .questionVisible {
