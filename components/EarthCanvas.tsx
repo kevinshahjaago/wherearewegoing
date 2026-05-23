@@ -128,7 +128,7 @@ export default function EarthCanvas({
       s.H = H
       s.cx = W / 2
       s.cy = H * 0.43
-      s.eR = Math.min(W, H) * 0.22
+      s.eR = Math.min(W, H) * 0.28
       const sC = starsRef.current,
         eC = earthRef.current
       if (sC) {

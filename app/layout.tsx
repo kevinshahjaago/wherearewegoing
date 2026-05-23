@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import Script from 'next/script'
+import PrivacyBanner from '@/components/PrivacyBanner'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <main id="main-content">{children}</main>
+        <PrivacyBanner />
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
             src="https://plausible.io/js/script.js"

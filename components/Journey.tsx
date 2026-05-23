@@ -81,6 +81,7 @@ export default function Journey({
   const [btnVisible, setBtnVisible] = useState(false)
   const [btnDisabled, setBtnDisabled] = useState(false)
   const [inputError, setInputError] = useState(false)
+  const [locationPromptVisible, setLocationPromptVisible] = useState(false)
   // null = session check in progress, 'first' | 'return' = determined
   const [visitType, setVisitType] = useState<'first' | 'return' | null>(null)
 
@@ -168,10 +169,12 @@ export default function Journey({
       .then((d) => ({ visions: d.visions ?? [], countryCount: d.countryCount ?? 0 }))
       .catch(() => null)
 
+    setLocationPromptVisible(true)
     const geo = await Promise.race([
       getGeolocation(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
     ])
+    setLocationPromptVisible(false)
 
     fetch('/api/contribute', {
       method: 'POST',
@@ -255,10 +258,12 @@ export default function Journey({
 
     if (!mission) return
 
+    setLocationPromptVisible(true)
     const geo = await Promise.race([
       getGeolocation(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
     ])
+    setLocationPromptVisible(false)
 
     fetch('/api/contribute', {
       method: 'POST',
@@ -560,6 +565,14 @@ export default function Journey({
   return (
     <>
       <EarthCanvas ref={earthRef} earthFill={earthFill} contributionCount={liveContributions} />
+
+      <div
+        role="status"
+        aria-live="polite"
+        className={`${styles.locationPrompt}${locationPromptVisible ? ` ${styles.locationPromptVisible}` : ''}`}
+      >
+        Share your location so we can add your vision to where you are
+      </div>
 
       <div className={styles.wordmark} aria-label="wherearewegoing.earth">
         wherearewegoing.earth
