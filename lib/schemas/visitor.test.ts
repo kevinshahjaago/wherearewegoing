@@ -12,8 +12,12 @@ describe('VisitorUpsertSchema', () => {
   })
 
   it('rejects a countryCode that is not 2 characters', () => {
-    expect(VisitorUpsertSchema.safeParse({ fingerprint: 'fp', countryCode: 'USA' }).success).toBe(false)
-    expect(VisitorUpsertSchema.safeParse({ fingerprint: 'fp', countryCode: 'U' }).success).toBe(false)
+    expect(VisitorUpsertSchema.safeParse({ fingerprint: 'fp', countryCode: 'USA' }).success).toBe(
+      false
+    )
+    expect(VisitorUpsertSchema.safeParse({ fingerprint: 'fp', countryCode: 'U' }).success).toBe(
+      false
+    )
   })
 
   it('accepts a valid 2-character countryCode', () => {

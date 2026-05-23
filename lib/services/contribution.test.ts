@@ -29,7 +29,9 @@ describe('saveContribution', () => {
 
     await saveContribution(supabase, BASE_ARGS)
     expect(inserted).not.toBeNull()
-    expect((inserted as unknown as Record<string, unknown>).config_version).toBe(EXPERIENCE_CONFIG.version)
+    expect((inserted as unknown as Record<string, unknown>).config_version).toBe(
+      EXPERIENCE_CONFIG.version
+    )
   })
 
   it('includes geolocation when provided', async () => {
@@ -44,7 +46,10 @@ describe('saveContribution', () => {
     } as unknown as Parameters<typeof saveContribution>[0]
 
     await saveContribution(supabase, { ...BASE_ARGS, geolocation: { lat: 51.5, lng: -0.1 } })
-    expect((inserted as unknown as Record<string, unknown>).geolocation).toEqual({ lat: 51.5, lng: -0.1 })
+    expect((inserted as unknown as Record<string, unknown>).geolocation).toEqual({
+      lat: 51.5,
+      lng: -0.1,
+    })
   })
 
   it('sets geolocation to null when omitted', async () => {
@@ -84,6 +89,8 @@ describe('saveContribution', () => {
 
   it('resolves with a hue on success', async () => {
     const supabase = makeSupabase(null)
-    await expect(saveContribution(supabase, BASE_ARGS)).resolves.toMatchObject({ hue: expect.any(Number) })
+    await expect(saveContribution(supabase, BASE_ARGS)).resolves.toMatchObject({
+      hue: expect.any(Number),
+    })
   })
 })

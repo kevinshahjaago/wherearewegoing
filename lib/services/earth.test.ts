@@ -27,12 +27,16 @@ describe('getEarthFill', () => {
   })
 
   it('clamps to 1 when total exceeds max', async () => {
-    const supabase = makeSupabase({ data: { total: EXPERIENCE_CONFIG.maxEarthFillContributions * 2 } })
+    const supabase = makeSupabase({
+      data: { total: EXPERIENCE_CONFIG.maxEarthFillContributions * 2 },
+    })
     expect(await getEarthFill(supabase)).toBe(1)
   })
 
   it('returns proportional fill for midpoint', async () => {
-    const supabase = makeSupabase({ data: { total: EXPERIENCE_CONFIG.maxEarthFillContributions / 2 } })
+    const supabase = makeSupabase({
+      data: { total: EXPERIENCE_CONFIG.maxEarthFillContributions / 2 },
+    })
     expect(await getEarthFill(supabase)).toBeCloseTo(0.5)
   })
 

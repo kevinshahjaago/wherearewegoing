@@ -9,11 +9,7 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: true } }],
   },
-  collectCoverageFrom: [
-    'lib/services/**/*.ts',
-    'lib/schemas/**/*.ts',
-    'config/experience.ts',
-  ],
+  collectCoverageFrom: ['lib/services/**/*.ts', 'lib/schemas/**/*.ts', 'config/experience.ts'],
   coverageThreshold: {
     global: {},
     'lib/services/': { lines: 80 },

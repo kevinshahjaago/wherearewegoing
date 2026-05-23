@@ -24,20 +24,6 @@ function buildSupabase({
   const inserted: unknown[] = []
   const updated: unknown[] = []
 
-  type Builder = Record<string, (...args: unknown[]) => Builder | Promise<unknown>>
-
-  function chain(result: () => Promise<unknown>, methods: string[] = []): Builder {
-    const node: Builder = {}
-    const all = ['select', 'eq', 'gt', 'not', 'maybeSingle', 'single', 'insert', 'update', 'limit', 'order']
-    for (const m of all) {
-      node[m] = (..._args: unknown[]) => {
-        if (m === 'maybeSingle' || m === 'single') return result()
-        return chain(result, [...methods, m])
-      }
-    }
-    return node
-  }
-
   return {
     _inserted: inserted,
     _updated: updated,
@@ -62,7 +48,10 @@ function buildSupabase({
               if (cols.includes('country_code')) {
                 return {
                   not: (_c: unknown, _op: unknown, _v: unknown) =>
-                    Promise.resolve({ data: countries.map((c) => ({ country_code: c })), error: null }),
+                    Promise.resolve({
+                      data: countries.map((c) => ({ country_code: c })),
+                      error: null,
+                    }),
                 }
               }
               // contributions principles query
@@ -82,7 +71,10 @@ function buildSupabase({
         },
       }
     },
-  } as unknown as Parameters<typeof upsertVisitor>[0] & { _inserted: unknown[]; _updated: unknown[] }
+  } as unknown as Parameters<typeof upsertVisitor>[0] & {
+    _inserted: unknown[]
+    _updated: unknown[]
+  }
 }
 
 describe('upsertVisitor — first visit', () => {
@@ -139,7 +131,7 @@ describe('upsertVisitor — return visit (UUID match)', () => {
     })
     await upsertVisitor(supabase, BASE_ARGS)
     expect(supabase._updated).toHaveLength(1)
-    expect((supabase._updated[0] as Record<string, unknown>)).toHaveProperty('last_seen_at')
+    expect(supabase._updated[0] as Record<string, unknown>).toHaveProperty('last_seen_at')
   })
 })
 
