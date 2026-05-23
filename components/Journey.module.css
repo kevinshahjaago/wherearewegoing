@@ -28,9 +28,9 @@
   transform: translateX(-50%);
   z-index: 20;
   font-family: var(--font-cormorant), serif;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.45em;
-  color: rgba(237, 232, 218, 0.6);
+  color: rgba(237, 232, 218, 0.82);
   text-transform: uppercase;
 }
 

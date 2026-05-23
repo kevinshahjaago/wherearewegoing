@@ -556,7 +556,7 @@ export default function Journey({
       <EarthCanvas ref={earthRef} earthFill={earthFill} contributionCount={liveContributions} />
 
       <div className={styles.wordmark} aria-label="wherearewegoing.earth">
-        wherearewegoing
+        wherearewegoing.earth
       </div>
 
       <div className={styles.ui}>
