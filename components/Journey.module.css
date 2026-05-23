@@ -339,6 +339,137 @@
   cursor: default;
 }
 
+/* ── Stats bar (people · countries) ── */
+.statsBar {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  color: rgba(237, 232, 218, 0.65);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.statsDot {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(237, 232, 218, 0.35);
+  flex-shrink: 0;
+}
+
+/* ── Earth mode toggle (mission / values) ── */
+.modeToggle {
+  display: none;
+  gap: 0;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(237, 232, 218, 0.2);
+  overflow: hidden;
+}
+
+.modeToggleVisible {
+  display: flex;
+}
+
+.modeBtn {
+  background: none;
+  border: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  color: rgba(237, 232, 218, 0.5);
+  transition: all 0.25s;
+}
+
+.modeBtnActive {
+  background: rgba(237, 232, 218, 0.08);
+  color: rgba(237, 232, 218, 0.9);
+}
+
+.modeBtn:hover:not(.modeBtnActive) {
+  color: rgba(237, 232, 218, 0.75);
+}
+
+/* ── Explore all visions ── */
+.exploreToggle {
+  background: none;
+  border: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(237, 232, 218, 0.45);
+  cursor: pointer;
+  padding: 0.3rem 0;
+  margin-bottom: 0.8rem;
+  transition: color 0.2s;
+  display: none;
+}
+
+.exploreToggleVisible {
+  display: block;
+}
+
+.exploreToggle:hover {
+  color: rgba(237, 232, 218, 0.75);
+}
+
+.exploreList {
+  display: none;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: min(420px, 88vw);
+  max-height: 36vh;
+  overflow-y: auto;
+  margin-bottom: 1.2rem;
+  scrollbar-width: none;
+}
+
+.exploreList::-webkit-scrollbar {
+  display: none;
+}
+
+.exploreListVisible {
+  display: flex;
+}
+
+.exploreItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.exploreHue {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+  opacity: 0.75;
+}
+
+.exploreMission {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(0.82rem, 1.8vw, 0.96rem);
+  color: rgba(237, 232, 218, 0.72);
+  line-height: 1.45;
+}
+
+.exploreCountry {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: rgba(237, 232, 218, 0.35);
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
 /* ── Flash overlay ── */
 .flash {
   position: fixed;

@@ -52,10 +52,14 @@ export const EXPERIENCE_CONFIG = {
       line2: 'the earth.',
     },
     reveal: {
-      voicesRegionLabel: 'Voices from around the world',
+      voicesRegionLabel: 'Visions from around the world',
       copyLink: 'Copy link',
       copied: 'Copied ✓',
       returnCta: 'Return another day',
+      modeToggleMission: 'Mission',
+      modeToggleValues: 'Values',
+      exploreAll: 'Explore all visions',
+      exploreCollapse: 'Show less',
     },
     return: {
       line1: 'What is your mission',

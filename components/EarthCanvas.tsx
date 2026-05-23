@@ -2,13 +2,19 @@
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 
-// Mirrors the theme hues in lib/services/hue.ts — kept here as a plain constant
-// so this client component never imports the server-only Anthropic SDK.
 const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
 
+export type EarthMode = 'mission' | 'values'
+
 export type EarthCanvasHandle = {
-  addLights: (n: number, geo?: { lat: number; lng: number }, hue?: number) => void
+  addLights: (
+    n: number,
+    geo?: { lat: number; lng: number },
+    missionHue?: number,
+    valuesHue?: number
+  ) => void
   flash: () => void
+  setMode: (mode: EarthMode) => void
 }
 
 type Star = { x: number; y: number; r: number; a: number; ph: number; sp: number }
@@ -16,7 +22,8 @@ type Light = {
   th: number
   ph2: number
   r: number
-  hue: number
+  missionHue: number
+  valuesHue: number
   a: number
   ta: number
   p: number
@@ -36,6 +43,7 @@ type AnimState = {
   glowT: number
   rafId: number
   reducedMotion: boolean
+  mode: EarthMode
 }
 
 export default function EarthCanvas({
@@ -63,21 +71,29 @@ export default function EarthCanvas({
     glowT: 0,
     rafId: 0,
     reducedMotion: false,
+    mode: 'mission',
   })
 
   useImperativeHandle(ref, () => ({
-    addLights(n: number, geo?: { lat: number; lng: number }, hue?: number) {
+    addLights(
+      n: number,
+      geo?: { lat: number; lng: number },
+      missionHue?: number,
+      valuesHue?: number
+    ) {
       const s = anim.current
       for (let i = 0; i < n; i++) {
         setTimeout(() => {
           const th = geo ? (geo.lng * Math.PI) / 180 - s.earthRot : Math.random() * Math.PI * 2
           const ph2 = geo ? ((90 - geo.lat) * Math.PI) / 180 : Math.acos(2 * Math.random() - 1)
-          const lightHue = hue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
+          const mh = missionHue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
+          const vh = valuesHue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
           s.lights.push({
             th,
             ph2,
             r: 1.5 + Math.random() * 3,
-            hue: lightHue,
+            missionHue: mh,
+            valuesHue: vh,
             a: 0,
             ta: 0.3 + Math.random() * 0.7,
             p: Math.random() * Math.PI * 2,
@@ -96,6 +112,9 @@ export default function EarthCanvas({
         el.style.opacity = '0'
       }, 350)
     },
+    setMode(mode: EarthMode) {
+      anim.current.mode = mode
+    },
   }))
 
   useEffect(() => {
@@ -108,7 +127,6 @@ export default function EarthCanvas({
       s.W = W
       s.H = H
       s.cx = W / 2
-      // Shift earth slightly above center so text/button have room below without overlap
       s.cy = H * 0.43
       s.eR = Math.min(W, H) * 0.22
       const sC = starsRef.current,
@@ -143,7 +161,8 @@ export default function EarthCanvas({
           th: Math.random() * Math.PI * 2,
           ph2: Math.acos(2 * Math.random() - 1),
           r: 1.5 + Math.random() * 3,
-          hue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
+          missionHue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
+          valuesHue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
           a: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           ta: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           p: Math.random() * Math.PI * 2,
@@ -241,8 +260,9 @@ export default function EarthCanvas({
         const pulse = s.reducedMotion ? 1 : 0.72 + 0.28 * Math.sin(l.p)
         const alpha = l.a * vis * pulse,
           rad = l.r * (0.55 + 0.45 * vis)
+        const hue = s.mode === 'mission' ? l.missionHue : l.valuesHue
         const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 2.8)
-        gr.addColorStop(0, `hsla(${l.hue},65%,68%,${alpha})`)
+        gr.addColorStop(0, `hsla(${hue},65%,68%,${alpha})`)
         gr.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.beginPath()
         ctx.arc(px, py, rad * 2.8, 0, Math.PI * 2)

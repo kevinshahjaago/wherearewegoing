@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requestLogger } from '@/lib/logger'
-import { getRecentVoices, getTotalContributions } from '@/lib/services/earth'
+import { getRecentVisions, getTotalContributions, getCountryCount } from '@/lib/services/earth'
 import { randomUUID } from 'crypto'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
 
@@ -11,13 +11,14 @@ export async function GET() {
 
   try {
     const supabase = await createClient()
-    const [voices, total] = await Promise.all([
-      getRecentVoices(supabase),
+    const [visions, total, countryCount] = await Promise.all([
+      getRecentVisions(supabase),
       getTotalContributions(supabase),
+      getCountryCount(supabase),
     ])
-    log.info({ count: voices.length, total }, 'Voices fetched')
+    log.info({ count: visions.length, total, countryCount }, 'Visions fetched')
     return NextResponse.json(
-      { voices, totalContributions: total },
+      { visions, totalContributions: total, countryCount },
       {
         headers: {
           'Cache-Control': `public, s-maxage=${EXPERIENCE_CONFIG.voices.cacheSeconds}, stale-while-revalidate=60`,
@@ -25,7 +26,7 @@ export async function GET() {
       }
     )
   } catch (err) {
-    log.error({ err }, 'Failed to fetch voices')
+    log.error({ err }, 'Failed to fetch visions')
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

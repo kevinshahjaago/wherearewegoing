@@ -6,7 +6,8 @@ import { getBrowserFingerprint } from '@/lib/fingerprint'
 import { track } from '@/lib/analytics/client'
 import { getGeolocation } from '@/lib/geolocation'
 import { createClient } from '@/lib/supabase/client'
-import EarthCanvas, { type EarthCanvasHandle } from './EarthCanvas'
+import EarthCanvas, { type EarthCanvasHandle, type EarthMode } from './EarthCanvas'
+import type { VisionItem } from '@/lib/services/earth'
 import styles from './Journey.module.css'
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -19,19 +20,29 @@ type Delta = {
 
 const { copy } = EXPERIENCE_CONFIG
 
-const FALLBACK_VOICES = [
-  '"To reduce unnecessary suffering"',
-  '"To understand itself"',
-  '"To love without keeping score"',
-  '"To leave it better"',
-  '"To protect what is fragile"',
-  '"To be present"',
-  '"To repair what is broken"',
-  '"To see each other clearly"',
-  '"That the future gets a vote"',
-  '"To mean what we say"',
-  '"To act as if we are responsible"',
-  '"To stop treating people as problems"',
+const FALLBACK_VISIONS: VisionItem[] = [
+  {
+    mission: 'To reduce unnecessary suffering',
+    missionHue: 210,
+    valuesHue: 170,
+    countryCode: null,
+  },
+  { mission: 'To understand itself', missionHue: 280, valuesHue: 220, countryCode: null },
+  { mission: 'To love without keeping score', missionHue: 35, valuesHue: 30, countryCode: null },
+  { mission: 'To leave it better', missionHue: 130, valuesHue: 130, countryCode: null },
+  { mission: 'To protect what is fragile', missionHue: 170, valuesHue: 170, countryCode: null },
+  { mission: 'To be present', missionHue: 55, valuesHue: 170, countryCode: null },
+  { mission: 'To repair what is broken', missionHue: 15, valuesHue: 15, countryCode: null },
+  { mission: 'To see each other clearly', missionHue: 240, valuesHue: 280, countryCode: null },
+  { mission: 'That the future gets a vote', missionHue: 220, valuesHue: 220, countryCode: null },
+  { mission: 'To mean what we say', missionHue: 280, valuesHue: 280, countryCode: null },
+  { mission: 'To act as if we are responsible', missionHue: 130, valuesHue: 55, countryCode: null },
+  {
+    mission: 'To stop treating people as problems',
+    missionHue: 310,
+    valuesHue: 30,
+    countryCode: null,
+  },
 ]
 
 export default function Journey({
@@ -52,9 +63,12 @@ export default function Journey({
   const [suggestsVisible, setSuggestsVisible] = useState(false)
   const [principles, setPrinciples] = useState<string[]>([])
   const [usedSeeds, setUsedSeeds] = useState<Set<string>>(new Set())
-  const [displayVoices, setDisplayVoices] = useState<string[]>(FALLBACK_VOICES)
+  const [displayVisions, setDisplayVisions] = useState<VisionItem[]>(FALLBACK_VISIONS)
   const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
   const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
+  const [countryCount, setCountryCount] = useState(0)
+  const [earthMode, setEarthMode] = useState<EarthMode>('mission')
+  const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
   const [yourMarkVisible, setYourMarkVisible] = useState(false)
@@ -114,8 +128,8 @@ export default function Journey({
 
   // Declared before goContribute which calls it
   const goReveal = useCallback(
-    (fetchedVoices: string[] | null = null) => {
-      const voices = fetchedVoices && fetchedVoices.length > 0 ? fetchedVoices : FALLBACK_VOICES
+    (fetched: { visions: VisionItem[]; countryCount: number } | null = null) => {
+      const visions = fetched && fetched.visions.length > 0 ? fetched.visions : FALLBACK_VISIONS
       track('voices_revealed')
       setStep(5)
       setYourMark(`"${missionText.current}"`)
@@ -123,10 +137,11 @@ export default function Journey({
       setTimeout(() => setYourMarkOpacity(1), 200)
       transitionQuestion(null)
 
-      setDisplayVoices(voices)
+      setDisplayVisions(visions)
+      if (fetched) setCountryCount(fetched.countryCount)
       setCycleVoiceIdx(0)
+      setExploreOpen(false)
       setTimeout(() => setCycleVoiceVisible(true), 1200)
-
       setTimeout(() => setShareRowVisible(true), 2800)
       showBtn(copy.reveal.returnCta, true)
     },
@@ -149,8 +164,8 @@ export default function Journey({
 
     const animDone = new Promise<void>((resolve) => setTimeout(resolve, 2600))
     const voicesFetch = fetch('/api/voices')
-      .then((r) => r.json() as Promise<{ voices: string[] }>)
-      .then((d) => d.voices)
+      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .then((d) => ({ visions: d.visions ?? [], countryCount: d.countryCount ?? 0 }))
       .catch(() => null)
 
     const geo = await Promise.race([
@@ -171,8 +186,8 @@ export default function Journey({
       }),
     }).catch(() => null)
 
-    const [, voices] = await Promise.all([animDone, voicesFetch])
-    goReveal(voices ?? null)
+    const [, fetched] = await Promise.all([animDone, voicesFetch])
+    goReveal(fetched ?? null)
   }, [transitionQuestion, goReveal])
 
   const goCommitment = useCallback(() => {
@@ -225,20 +240,6 @@ export default function Journey({
     )
     showBtn(copy.mission.cta)
   }, [transitionQuestion, showBtn, showInput])
-
-  const goArrival = useCallback(() => {
-    setStep(0)
-    setInputVisible(false)
-    setSeedsVisible(false)
-    setSuggestsVisible(false)
-    setCycleVoiceVisible(false)
-    setYourMarkVisible(false)
-    setYourMarkOpacity(0)
-    setShareRowVisible(false)
-    setShiftsVisible(false)
-    transitionQuestion({ line1: copy.arrival.line1, line2: copy.arrival.line2 })
-    showBtn(copy.arrival.cta)
-  }, [transitionQuestion, showBtn])
 
   const goContributeReturn = useCallback(async () => {
     const mission = inputRef.current?.value.trim() ?? ''
@@ -468,6 +469,11 @@ export default function Journey({
     return () => clearTimeout(t)
   }, [visitType, delta, goReturn, goMission])
 
+  // Sync earth mode when toggle changes
+  useEffect(() => {
+    earthRef.current?.setMode(earthMode)
+  }, [earthMode])
+
   // R key: jump to return flow from reveal screen
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -516,16 +522,16 @@ export default function Journey({
 
   // Cycle voices one at a time on the reveal screen
   useEffect(() => {
-    if (step !== 5 || displayVoices.length === 0) return
+    if (step !== 5 || displayVisions.length === 0 || exploreOpen) return
     const interval = setInterval(() => {
       setCycleVoiceVisible(false)
       setTimeout(() => {
-        setCycleVoiceIdx((i) => (i + 1) % displayVoices.length)
+        setCycleVoiceIdx((i) => (i + 1) % displayVisions.length)
         setCycleVoiceVisible(true)
       }, 900)
     }, 7000)
     return () => clearInterval(interval)
-  }, [step, displayVoices.length])
+  }, [step, displayVisions.length, exploreOpen])
 
   // Live earth: add a geo-positioned, hue-colored light on every new contribution INSERT
   useEffect(() => {
@@ -539,8 +545,8 @@ export default function Journey({
           const raw = payload.new?.geolocation as { lat: number; lng: number } | null | undefined
           const geo =
             raw?.lat != null && raw?.lng != null ? { lat: raw.lat, lng: raw.lng } : undefined
-          const hue = payload.new?.hue as number | null | undefined
-          earthRef.current?.addLights(1, geo, hue ?? undefined)
+          const missionHue = payload.new?.hue as number | null | undefined
+          earthRef.current?.addLights(1, geo, missionHue ?? undefined, undefined)
           setLiveContributions((n) => n + 1)
         }
       )
@@ -591,7 +597,7 @@ export default function Journey({
                     aria-hidden="true"
                   />
                   <span>
-                    {delta.newVoices.toLocaleString()} new voice{delta.newVoices !== 1 ? 's' : ''}{' '}
+                    {delta.newVoices.toLocaleString()} new vision{delta.newVoices !== 1 ? 's' : ''}{' '}
                     since you were last here
                   </span>
                 </li>
@@ -657,16 +663,72 @@ export default function Journey({
           role="status"
           aria-live="polite"
           aria-label={copy.reveal.voicesRegionLabel}
-          className={`${styles.cycleVoice}${cycleVoiceVisible ? ` ${styles.cycleVoiceVisible}` : ''}`}
+          className={`${styles.cycleVoice}${cycleVoiceVisible && !exploreOpen ? ` ${styles.cycleVoiceVisible}` : ''}`}
         >
-          {step === 5 ? (displayVoices[cycleVoiceIdx] ?? '') : ''}
+          {step === 5 && !exploreOpen ? `"${displayVisions[cycleVoiceIdx]?.mission ?? ''}"` : ''}
         </div>
 
-        {step === 5 && displayVoices.length > 1 && (
-          <p className={styles.voiceCounter}>
-            {cycleVoiceIdx + 1} of {displayVoices.length} voices
-          </p>
+        {step === 5 && (
+          <div className={styles.statsBar}>
+            <span>{liveContributions.toLocaleString()} visions</span>
+            {countryCount > 0 && (
+              <>
+                <span className={styles.statsDot} aria-hidden="true" />
+                <span>{countryCount} countries</span>
+              </>
+            )}
+          </div>
         )}
+
+        <div
+          role="group"
+          aria-label="Earth color mode"
+          className={`${styles.modeToggle}${step === 5 ? ` ${styles.modeToggleVisible}` : ''}`}
+        >
+          <button
+            className={`${styles.modeBtn}${earthMode === 'mission' ? ` ${styles.modeBtnActive}` : ''}`}
+            onClick={() => setEarthMode('mission')}
+            aria-pressed={earthMode === 'mission'}
+          >
+            {copy.reveal.modeToggleMission}
+          </button>
+          <button
+            className={`${styles.modeBtn}${earthMode === 'values' ? ` ${styles.modeBtnActive}` : ''}`}
+            onClick={() => setEarthMode('values')}
+            aria-pressed={earthMode === 'values'}
+          >
+            {copy.reveal.modeToggleValues}
+          </button>
+        </div>
+
+        <button
+          className={`${styles.exploreToggle}${step === 5 ? ` ${styles.exploreToggleVisible}` : ''}`}
+          onClick={() => setExploreOpen((o) => !o)}
+        >
+          {exploreOpen ? copy.reveal.exploreCollapse : copy.reveal.exploreAll}
+        </button>
+
+        <div
+          role="region"
+          aria-label={copy.reveal.voicesRegionLabel}
+          className={`${styles.exploreList}${exploreOpen ? ` ${styles.exploreListVisible}` : ''}`}
+        >
+          {displayVisions.map((v, i) => (
+            <div key={i} className={styles.exploreItem}>
+              <span
+                className={styles.exploreHue}
+                style={{
+                  background: `hsl(${earthMode === 'mission' ? v.missionHue : v.valuesHue},55%,62%)`,
+                }}
+                aria-hidden="true"
+              />
+              <div>
+                <p className={styles.exploreMission}>&ldquo;{v.mission}&rdquo;</p>
+                {v.countryCode && <p className={styles.exploreCountry}>{v.countryCode}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div
           role="group"

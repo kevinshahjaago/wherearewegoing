@@ -1,4 +1,4 @@
-import { getEarthFill, getRecentVoices, getTotalContributions } from './earth'
+import { getEarthFill, getRecentVisions, getTotalContributions, deriveValuesHue } from './earth'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
 
 function makeSupabase(overrides: Record<string, unknown> = {}) {
@@ -11,6 +11,7 @@ function makeSupabase(overrides: Record<string, unknown> = {}) {
         order: () => ({
           limit: () => Promise.resolve(overrides),
         }),
+        not: () => Promise.resolve(overrides),
         gt: () => ({
           not: () => Promise.resolve(overrides),
           limit: () => Promise.resolve(overrides),
@@ -58,24 +59,34 @@ describe('getTotalContributions', () => {
   })
 })
 
-describe('getRecentVoices', () => {
-  it('wraps missions in quotes', async () => {
+describe('getRecentVisions', () => {
+  it('wraps missions and includes hues', async () => {
     const supabase = {
       from: () => ({
         select: () => ({
           order: () => ({
             limit: () =>
               Promise.resolve({
-                data: [{ mission: 'To love better' }, { mission: 'To listen' }],
+                data: [
+                  {
+                    mission: 'To love better',
+                    hue: 35,
+                    principles: ['Care precedes transaction'],
+                    country_code: 'GB',
+                  },
+                  { mission: 'To listen', hue: 170, principles: [], country_code: null },
+                ],
               }),
           }),
         }),
       }),
-    } as unknown as Parameters<typeof getRecentVoices>[0]
+    } as unknown as Parameters<typeof getRecentVisions>[0]
 
-    const voices = await getRecentVoices(supabase, 5)
-    expect(voices).toHaveLength(2)
-    expect(voices[0]).toMatch(/^".*"$/)
+    const visions = await getRecentVisions(supabase, 5)
+    expect(visions).toHaveLength(2)
+    expect(visions[0]).toHaveProperty('mission')
+    expect(visions[0]).toHaveProperty('missionHue')
+    expect(visions[0]).toHaveProperty('valuesHue')
   })
 
   it('returns empty array when data is null', async () => {
@@ -87,8 +98,24 @@ describe('getRecentVoices', () => {
           }),
         }),
       }),
-    } as unknown as Parameters<typeof getRecentVoices>[0]
+    } as unknown as Parameters<typeof getRecentVisions>[0]
 
-    expect(await getRecentVoices(supabase)).toHaveLength(0)
+    expect(await getRecentVisions(supabase)).toHaveLength(0)
+  })
+})
+
+describe('deriveValuesHue', () => {
+  it('returns 45 for empty principles', () => {
+    expect(deriveValuesHue([])).toBe(45)
+  })
+
+  it('returns known hue for a single known principle', () => {
+    expect(deriveValuesHue(['Interdependence'])).toBe(130)
+  })
+
+  it('returns a number in 0-359 range for unknown principles', () => {
+    const h = deriveValuesHue(['Something completely unknown'])
+    expect(h).toBeGreaterThanOrEqual(0)
+    expect(h).toBeLessThanOrEqual(359)
   })
 })
