@@ -133,14 +133,17 @@ export default function EarthCanvas({
 
     function seedLights() {
       s.lights = []
-      for (let i = 0; i < Math.floor(s.earthFill * 370); i++) {
+      // Always show at least 12 faint ambient lights so the earth never looks dead
+      const count = Math.max(12, Math.floor(s.earthFill * 370))
+      const isAmbient = s.earthFill === 0
+      for (let i = 0; i < count; i++) {
         s.lights.push({
           th: Math.random() * Math.PI * 2,
           ph2: Math.acos(2 * Math.random() - 1),
           r: 1.5 + Math.random() * 3,
           w: Math.random(),
-          a: 0.3 + Math.random() * 0.7,
-          ta: 0.3 + Math.random() * 0.7,
+          a: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
+          ta: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           p: Math.random() * Math.PI * 2,
           sp: 0.005 + Math.random() * 0.015,
           grow: false,
@@ -172,7 +175,7 @@ export default function EarthCanvas({
       const R = s.eR,
         { cx, cy } = s
 
-      const gi = 0.03 + s.earthFill * 0.07 + 0.012 * Math.sin(s.glowT)
+      const gi = 0.06 + s.earthFill * 0.07 + 0.012 * Math.sin(s.glowT)
       const og = ctx.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.4)
       og.addColorStop(0, `rgba(201,168,76,${gi})`)
       og.addColorStop(0.6, `rgba(122,156,126,${gi * 0.3})`)
