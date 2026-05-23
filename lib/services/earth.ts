@@ -35,8 +35,7 @@ export function deriveValuesHue(principles: string[]): number {
 }
 
 export async function getEarthFill(supabase: SupabaseClient): Promise<number> {
-  const { data } = await supabase.from('contribution_stats').select('total').eq('id', 1).single()
-  const total = (data?.total as number) ?? 0
+  const total = await getTotalContributions(supabase)
   return Math.min(1, total / EXPERIENCE_CONFIG.maxEarthFillContributions)
 }
 
@@ -62,7 +61,11 @@ export async function getRecentVisions(
 
 export async function getTotalContributions(supabase: SupabaseClient): Promise<number> {
   const { data } = await supabase.from('contribution_stats').select('total').eq('id', 1).single()
-  return (data?.total as number) ?? 0
+  const cached = (data?.total as number) ?? 0
+  if (cached > 0) return cached
+  // Fallback: direct count when the stats cache hasn't been populated
+  const { count } = await supabase.from('contributions').select('*', { count: 'exact', head: true })
+  return count ?? 0
 }
 
 export async function getCountryCount(supabase: SupabaseClient): Promise<number> {

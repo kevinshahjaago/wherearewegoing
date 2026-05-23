@@ -4,19 +4,23 @@ import { EXPERIENCE_CONFIG } from '@/config/experience'
 function makeSupabase(overrides: Record<string, unknown> = {}) {
   return {
     from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve(overrides),
-        }),
-        order: () => ({
-          limit: () => Promise.resolve(overrides),
-        }),
-        not: () => Promise.resolve(overrides),
-        gt: () => ({
+      select: (_cols: string, opts?: Record<string, unknown>) => {
+        // HEAD count query (fallback path in getTotalContributions)
+        if (opts?.head === true) return Promise.resolve({ count: overrides.count ?? 0 })
+        return {
+          eq: () => ({
+            single: () => Promise.resolve(overrides),
+          }),
+          order: () => ({
+            limit: () => Promise.resolve(overrides),
+          }),
           not: () => Promise.resolve(overrides),
-          limit: () => Promise.resolve(overrides),
-        }),
-      }),
+          gt: () => ({
+            not: () => Promise.resolve(overrides),
+            limit: () => Promise.resolve(overrides),
+          }),
+        }
+      },
     }),
   } as unknown as Parameters<typeof getEarthFill>[0]
 }

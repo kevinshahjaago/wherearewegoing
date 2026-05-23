@@ -26,7 +26,7 @@ export const EXPERIENCE_CONFIG = {
     principles: {
       line1: 'What values & principles would',
       line2: 'make that mission real?',
-      placeholder: 'We treat strangers as neighbors…',
+      placeholder: 'Inspire curiosity in everyone…',
       cta: 'Continue',
       label: 'A value',
       seeds: [
