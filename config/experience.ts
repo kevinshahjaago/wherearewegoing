@@ -19,14 +19,14 @@ export const EXPERIENCE_CONFIG = {
     mission: {
       line1: 'What do you want',
       line2: "our Earth's mission to be?",
-      placeholder: 'To love, and keep learning how to love better…',
+      placeholder: 'Play, explore, discover new life…',
       cta: 'Add my vision',
       label: "Earth's mission",
     },
     principles: {
       line1: 'What values & principles would',
       line2: 'make that mission real?',
-      placeholder: 'Inspire curiosity in everyone…',
+      placeholder: 'No shame…',
       cta: 'Continue',
       label: 'A value',
       seeds: [

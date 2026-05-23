@@ -28,8 +28,8 @@
   transform: translateX(-50%);
   z-index: 20;
   font-family: var(--font-cormorant), serif;
-  font-size: 12px;
-  letter-spacing: 0.45em;
+  font-size: 11px;
+  letter-spacing: 0.28em;
   color: rgba(237, 232, 218, 0.82);
   text-transform: uppercase;
 }

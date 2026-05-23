@@ -575,7 +575,7 @@ export default function Journey({
       </div>
 
       <div className={styles.wordmark} aria-label="wherearewegoing.earth">
-        wherearewegoing.earth
+        where are we going . earth
       </div>
 
       <div className={styles.ui}>
