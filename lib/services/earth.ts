@@ -9,7 +9,7 @@ export async function getEarthFill(supabase: SupabaseClient): Promise<number> {
 
 export async function getRecentVoices(
   supabase: SupabaseClient,
-  limit = EXPERIENCE_CONFIG.voices.sampleSize
+  limit: number = EXPERIENCE_CONFIG.voices.sampleSize
 ): Promise<string[]> {
   // Fetch a larger pool ordered by recency, then shuffle in JS.
   // Avoids ORDER BY RANDOM() full-scan on large tables while still feeling fresh.

@@ -14,21 +14,21 @@ export const EXPERIENCE_CONFIG = {
     arrival: {
       line1: 'Where are we',
       line2: 'going?',
-      cta: 'I want to answer',
+      cta: 'Add my light',
     },
     mission: {
       line1: 'What do you want',
       line2: "the earth's mission to be?",
       placeholder: 'To love, and keep learning how to love better…',
-      cta: 'Continue',
+      cta: 'Add my light',
       label: "Earth's mission",
     },
     principles: {
-      line1: 'What principles would',
+      line1: 'What values would',
       line2: 'need to be true?',
       placeholder: 'We treat strangers as neighbors…',
       cta: 'Continue',
-      label: 'A principle',
+      label: 'A value',
       seeds: [
         'Care precedes transaction',
         'Repair over perfection',

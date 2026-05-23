@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
+import { THEME_HUES } from '@/lib/services/hue'
 
 export type EarthCanvasHandle = {
-  addLights: (n: number, geo?: { lat: number; lng: number }) => void
+  addLights: (n: number, geo?: { lat: number; lng: number }, hue?: number) => void
   flash: () => void
 }
 
@@ -12,7 +13,7 @@ type Light = {
   th: number
   ph2: number
   r: number
-  w: number
+  hue: number
   a: number
   ta: number
   p: number
@@ -62,20 +63,18 @@ export default function EarthCanvas({
   })
 
   useImperativeHandle(ref, () => ({
-    addLights(n: number, geo?: { lat: number; lng: number }) {
+    addLights(n: number, geo?: { lat: number; lng: number }, hue?: number) {
       const s = anim.current
       for (let i = 0; i < n; i++) {
         setTimeout(() => {
-          // When geo is provided, lock the light to its real geographic position.
-          // th is adjusted for current earthRot so the light lands at the correct
-          // longitude on the spinning globe (rt = th + earthRot = lng_in_radians).
           const th = geo ? (geo.lng * Math.PI) / 180 - s.earthRot : Math.random() * Math.PI * 2
           const ph2 = geo ? ((90 - geo.lat) * Math.PI) / 180 : Math.acos(2 * Math.random() - 1)
+          const lightHue = hue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
           s.lights.push({
             th,
             ph2,
             r: 1.5 + Math.random() * 3,
-            w: Math.random(),
+            hue: lightHue,
             a: 0,
             ta: 0.3 + Math.random() * 0.7,
             p: Math.random() * Math.PI * 2,
@@ -106,8 +105,9 @@ export default function EarthCanvas({
       s.W = W
       s.H = H
       s.cx = W / 2
-      s.cy = H / 2
-      s.eR = Math.min(W, H) * 0.26
+      // Shift earth slightly above center so text/button have room below without overlap
+      s.cy = H * 0.43
+      s.eR = Math.min(W, H) * 0.22
       const sC = starsRef.current,
         eC = earthRef.current
       if (sC) {
@@ -133,7 +133,6 @@ export default function EarthCanvas({
 
     function seedLights() {
       s.lights = []
-      // Always show at least 12 faint ambient lights so the earth never looks dead
       const count = Math.max(12, Math.floor(s.earthFill * 370))
       const isAmbient = s.earthFill === 0
       for (let i = 0; i < count; i++) {
@@ -141,7 +140,7 @@ export default function EarthCanvas({
           th: Math.random() * Math.PI * 2,
           ph2: Math.acos(2 * Math.random() - 1),
           r: 1.5 + Math.random() * 3,
-          w: Math.random(),
+          hue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
           a: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           ta: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           p: Math.random() * Math.PI * 2,
@@ -238,14 +237,8 @@ export default function EarthCanvas({
         const pulse = s.reducedMotion ? 1 : 0.72 + 0.28 * Math.sin(l.p)
         const alpha = l.a * vis * pulse,
           rad = l.r * (0.55 + 0.45 * vis)
-        const col =
-          l.w > 0.65
-            ? `rgba(232,200,122,${alpha})`
-            : l.w > 0.38
-              ? `rgba(200,155,70,${alpha})`
-              : `rgba(120,155,124,${alpha})`
         const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 2.8)
-        gr.addColorStop(0, col)
+        gr.addColorStop(0, `hsla(${l.hue},65%,68%,${alpha})`)
         gr.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.beginPath()
         ctx.arc(px, py, rad * 2.8, 0, Math.PI * 2)

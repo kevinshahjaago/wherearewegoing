@@ -53,10 +53,9 @@ export default function Journey({
   const [principles, setPrinciples] = useState<string[]>([])
   const [usedSeeds, setUsedSeeds] = useState<Set<string>>(new Set())
   const [displayVoices, setDisplayVoices] = useState<string[]>(FALLBACK_VOICES)
-  const [voicesVisible, setVoicesVisible] = useState(false)
-  const [voicesUnblurred, setVoicesUnblurred] = useState<boolean[]>(
-    FALLBACK_VOICES.map(() => false)
-  )
+  const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
+  const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
+  const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
   const [yourMarkVisible, setYourMarkVisible] = useState(false)
   const [yourMarkOpacity, setYourMarkOpacity] = useState(0)
@@ -125,19 +124,8 @@ export default function Journey({
       transitionQuestion(null)
 
       setDisplayVoices(voices)
-      setVoicesVisible(true)
-      setVoicesUnblurred(voices.map(() => false))
-      setTimeout(() => {
-        voices.forEach((_, i) => {
-          setTimeout(() => {
-            setVoicesUnblurred((prev) => {
-              const next = [...prev]
-              next[i] = true
-              return next
-            })
-          }, i * 100)
-        })
-      }, 1200)
+      setCycleVoiceIdx(0)
+      setTimeout(() => setCycleVoiceVisible(true), 1200)
 
       setTimeout(() => setShareRowVisible(true), 2800)
       showBtn(copy.reveal.returnCta, true)
@@ -153,8 +141,9 @@ export default function Journey({
     setSuggestsVisible(false)
     setBtnDisabled(true)
     transitionQuestion({ line1: copy.joining.line1, line2: copy.joining.line2 })
-    // Burst lights immediately (random placement) — geo positioning happens via real-time
-    // events so other users see new lights at accurate coordinates
+
+    // Burst uses random theme hues; canonical hue is assigned by Claude server-side
+    // and arrives back on the earth via the real-time channel INSERT event.
     earthRef.current?.addLights(12)
     earthRef.current?.flash()
 
@@ -164,8 +153,6 @@ export default function Journey({
       .then((d) => d.voices)
       .catch(() => null)
 
-    // Race geo against 3 s — if the user grants permission quickly we include it;
-    // if not (or permission is already denied and IP fallback is slow) we proceed without.
     const geo = await Promise.race([
       getGeolocation(),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
@@ -212,7 +199,11 @@ export default function Journey({
       return
     }
     missionText.current = val
+    setAnchoredMission(val)
     track('mission_submitted', { config_version: String(EXPERIENCE_CONFIG.version) })
+    // Brief burst so the user feels their light land in the earth on mission submit
+    // Hue is random here — the canonical hue arrives via the real-time channel after API assigns it
+    earthRef.current?.addLights(3)
     setStep(2)
     setPrinciples([])
     setUsedSeeds(new Set())
@@ -240,7 +231,7 @@ export default function Journey({
     setInputVisible(false)
     setSeedsVisible(false)
     setSuggestsVisible(false)
-    setVoicesVisible(false)
+    setCycleVoiceVisible(false)
     setYourMarkVisible(false)
     setYourMarkOpacity(0)
     setShareRowVisible(false)
@@ -286,7 +277,7 @@ export default function Journey({
     setInputVisible(false)
     setSeedsVisible(false)
     setSuggestsVisible(false)
-    setVoicesVisible(false)
+    setCycleVoiceVisible(false)
     setYourMarkVisible(false)
     setYourMarkOpacity(0)
     setShareRowVisible(false)
@@ -394,9 +385,19 @@ export default function Journey({
   const handleInputResize = useCallback(() => {
     const el = inputRef.current
     if (!el) return
+    // Comma or Arabic comma → create pill immediately (values step only)
+    if (step === 2 && (el.value.endsWith(',') || el.value.endsWith('،'))) {
+      const text = el.value.slice(0, -1).trim()
+      if (text) {
+        addPrinciple(text)
+        el.value = ''
+        el.style.height = 'auto'
+        return
+      }
+    }
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
-  }, [])
+  }, [step, addPrinciple])
 
   // Establish anonymous session, fingerprint the device, detect return visits.
   // Sets visitType which triggers the appropriate journey flow below.
@@ -513,7 +514,20 @@ export default function Journey({
     return () => document.removeEventListener('visibilitychange', handler)
   }, [step])
 
-  // Live earth: add a geo-positioned light on every new contribution INSERT
+  // Cycle voices one at a time on the reveal screen
+  useEffect(() => {
+    if (step !== 5 || displayVoices.length === 0) return
+    const interval = setInterval(() => {
+      setCycleVoiceVisible(false)
+      setTimeout(() => {
+        setCycleVoiceIdx((i) => (i + 1) % displayVoices.length)
+        setCycleVoiceVisible(true)
+      }, 900)
+    }, 7000)
+    return () => clearInterval(interval)
+  }, [step, displayVoices.length])
+
+  // Live earth: add a geo-positioned, hue-colored light on every new contribution INSERT
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
@@ -525,7 +539,8 @@ export default function Journey({
           const raw = payload.new?.geolocation as { lat: number; lng: number } | null | undefined
           const geo =
             raw?.lat != null && raw?.lng != null ? { lat: raw.lat, lng: raw.lng } : undefined
-          earthRef.current?.addLights(1, geo)
+          const hue = payload.new?.hue as number | null | undefined
+          earthRef.current?.addLights(1, geo, hue ?? undefined)
           setLiveContributions((n) => n + 1)
         }
       )
@@ -632,29 +647,30 @@ export default function Journey({
           {yourMark}
         </div>
 
+        {step === 2 && anchoredMission && (
+          <div className={styles.missionAnchor} aria-hidden="true">
+            &ldquo;{anchoredMission}&rdquo;
+          </div>
+        )}
+
         <div
-          role="region"
+          role="status"
+          aria-live="polite"
           aria-label={copy.reveal.voicesRegionLabel}
-          aria-live="off"
-          className={`${styles.voices}${voicesVisible ? ` ${styles.voicesVisible}` : ''}`}
+          className={`${styles.cycleVoice}${cycleVoiceVisible ? ` ${styles.cycleVoiceVisible}` : ''}`}
         >
-          {displayVoices.map((v, i) => (
-            <span
-              key={v}
-              className={styles.voice}
-              style={{
-                animationDelay: `${i * 0.12}s`,
-                filter: voicesUnblurred[i] ? 'blur(0)' : 'blur(7px)',
-              }}
-            >
-              {v}
-            </span>
-          ))}
+          {step === 5 ? (displayVoices[cycleVoiceIdx] ?? '') : ''}
         </div>
+
+        {step === 5 && displayVoices.length > 1 && (
+          <p className={styles.voiceCounter}>
+            {cycleVoiceIdx + 1} of {displayVoices.length} voices
+          </p>
+        )}
 
         <div
           role="group"
-          aria-label="Selected principles — tap to remove"
+          aria-label="Selected values — tap to remove"
           className={`${styles.seeds}${seedsVisible ? ` ${styles.seedsVisible}` : ''}`}
         >
           {principles.map((p, i) => (
@@ -673,7 +689,7 @@ export default function Journey({
 
         <div
           role="group"
-          aria-label="Suggested principles"
+          aria-label="Suggested values"
           className={`${styles.suggests}${suggestsVisible ? ` ${styles.suggestsVisible}` : ''}`}
         >
           {(copy.principles.seeds as readonly string[]).map((seed) => {

@@ -35,14 +35,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    await saveContribution(supabase, {
+    const { hue } = await saveContribution(supabase, {
       visitorId: user.id,
       mission: parsed.data.mission,
       principles: parsed.data.principles,
       commitment: parsed.data.commitment,
       geolocation: parsed.data.geolocation,
     })
-    log.info({ userId: user.id }, 'Contribution saved')
+    log.info({ userId: user.id, hue }, 'Contribution saved')
 
     // Fire server-side analytics so the event reaches Plausible even if JS is blocked.
     // Run without await — analytics must not delay the response.
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       request
     )
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, hue })
   } catch (err) {
     log.error({ err }, 'Failed to save contribution')
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

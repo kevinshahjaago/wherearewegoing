@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
+import { assignHue } from './hue'
 
 export async function saveContribution(
   supabase: SupabaseClient,
@@ -18,7 +19,8 @@ export async function saveContribution(
     geolocation?: { lat: number; lng: number }
     countryCode?: string
   }
-): Promise<void> {
+): Promise<{ hue: number }> {
+  const hue = await assignHue(mission)
   const { error } = await supabase.from('contributions').insert({
     visitor_id: visitorId,
     mission,
@@ -27,6 +29,8 @@ export async function saveContribution(
     geolocation: geolocation ?? null,
     country_code: countryCode ?? null,
     config_version: EXPERIENCE_CONFIG.version,
+    hue,
   })
   if (error) throw new Error(error.message)
+  return { hue }
 }
