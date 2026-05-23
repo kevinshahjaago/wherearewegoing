@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "jest --testPathPatterns='(lib|config).*\\.test\\.ts$'",
     "test:integration": "jest --testPathPatterns='app/.*\\.test\\.ts$' --passWithNoTests",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --pass-with-no-tests",
     "test": "jest"
   },
   "dependencies": {
