@@ -462,7 +462,7 @@ export default function Journey({
         goReturn()
       } else {
         track('journey_started', { config_version: String(EXPERIENCE_CONFIG.version) })
-        goArrival()
+        goMission()
       }
     }, 300)
     return () => clearTimeout(t)

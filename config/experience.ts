@@ -20,7 +20,7 @@ export const EXPERIENCE_CONFIG = {
       line1: 'What do you want',
       line2: "the earth's mission to be?",
       placeholder: 'To love, and keep learning how to love better…',
-      cta: 'Add my light',
+      cta: 'Add my vision',
       label: "Earth's mission",
     },
     principles: {

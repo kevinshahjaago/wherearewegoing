@@ -179,8 +179,9 @@ export default function EarthCanvas({
 
       const gi = 0.06 + s.earthFill * 0.07 + 0.012 * Math.sin(s.glowT)
       const og = ctx.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.4)
-      og.addColorStop(0, `rgba(201,168,76,${gi})`)
-      og.addColorStop(0.6, `rgba(122,156,126,${gi * 0.3})`)
+      og.addColorStop(0, `rgba(80,140,210,${gi * 0.9})`)
+      og.addColorStop(0.4, `rgba(50,110,180,${gi * 0.5})`)
+      og.addColorStop(0.75, `rgba(30,70,140,${gi * 0.2})`)
       og.addColorStop(1, 'rgba(0,0,0,0)')
       ctx.beginPath()
       ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2)
@@ -188,10 +189,10 @@ export default function EarthCanvas({
       ctx.fill()
 
       const bg = ctx.createRadialGradient(cx - R * 0.22, cy - R * 0.18, R * 0.04, cx, cy, R)
-      bg.addColorStop(0, '#181d2c')
-      bg.addColorStop(0.45, '#0d0f1e')
-      bg.addColorStop(0.8, '#080a14')
-      bg.addColorStop(1, '#040508')
+      bg.addColorStop(0, '#0e2040')
+      bg.addColorStop(0.45, '#081830')
+      bg.addColorStop(0.8, '#050f20')
+      bg.addColorStop(1, '#020810')
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
       ctx.fillStyle = bg
@@ -260,7 +261,7 @@ export default function EarthCanvas({
       ctx.fill()
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
-      ctx.strokeStyle = `rgba(155,190,210,${0.1 + 0.03 * Math.sin(s.glowT * 0.6)})`
+      ctx.strokeStyle = `rgba(80,150,240,${0.18 + 0.05 * Math.sin(s.glowT * 0.6)})`
       ctx.lineWidth = R * 0.022
       ctx.stroke()
     }
