@@ -205,7 +205,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.18em;
-  color: rgba(237, 232, 218, 0.18);
+  color: rgba(237, 232, 218, 0.6);
   text-transform: uppercase;
   margin-bottom: 1.8rem;
 }
@@ -256,8 +256,8 @@
 
 .shareBtn {
   background: none;
-  border: 1px solid rgba(237, 232, 218, 0.1);
-  color: var(--muted);
+  border: 1px solid rgba(237, 232, 218, 0.35);
+  color: rgba(237, 232, 218, 0.7);
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
@@ -291,7 +291,7 @@
   gap: 0.6rem;
   align-items: flex-start;
   font-size: 0.76rem;
-  color: rgba(237, 232, 218, 0.35);
+  color: rgba(237, 232, 218, 0.7);
   line-height: 1.6;
   text-align: left;
 }

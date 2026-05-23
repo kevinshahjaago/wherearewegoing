@@ -24,8 +24,8 @@ export const EXPERIENCE_CONFIG = {
       label: "Earth's mission",
     },
     principles: {
-      line1: 'What values would',
-      line2: 'need to be true?',
+      line1: 'What values & principles would',
+      line2: 'make that mission real?',
       placeholder: 'We treat strangers as neighbors…',
       cta: 'Continue',
       label: 'A value',
