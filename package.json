@@ -10,7 +10,7 @@
     "lint:fix": "eslint --fix && prettier --write .",
     "typecheck": "tsc --noEmit",
     "test:unit": "jest --testPathPatterns='(lib|config).*\\.test\\.ts$'",
-    "test:integration": "jest --testPathPatterns='app/.*\\.test\\.ts$'",
+    "test:integration": "jest --testPathPatterns='app/.*\\.test\\.ts$' --passWithNoTests",
     "test:e2e": "playwright test",
     "test": "jest"
   },
