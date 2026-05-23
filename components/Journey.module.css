@@ -1,0 +1,356 @@
+/* ── UI overlay ── */
+.ui {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /*
+   * Bottom padding layers:
+   *  1. clamp(2.5rem, 7dvh, 4.5rem)        — desktop baseline, uses dvh for URL-bar changes
+   *  2. env(safe-area-inset-bottom, 0px)   — notch / home-indicator on iPhone
+   *  3. var(--keyboard-offset, 0px)        — virtual keyboard height (set by JS via visualViewport)
+   * max() keeps at least the baseline even if safe-area + keyboard exceeds it.
+   */
+  padding-bottom: max(
+    clamp(2.5rem, 7dvh, 4.5rem),
+    calc(env(safe-area-inset-bottom, 0px) + var(--keyboard-offset, 0px) + 1.5rem)
+  );
+}
+
+/* ── Wordmark ── */
+.wordmark {
+  position: fixed;
+  top: max(1.75rem, calc(env(safe-area-inset-top, 0px) + 1rem));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-family: var(--font-cormorant), serif;
+  font-size: 11px;
+  letter-spacing: 0.45em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ── Question ── */
+.question {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1.3rem, 3.2vw, 2rem);
+  font-weight: 300;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.38;
+  margin-bottom: 2rem;
+  max-width: 460px;
+  padding: 0 2rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.75s ease,
+    transform 0.75s ease;
+}
+
+.questionVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.questionEmphasis {
+  font-style: italic;
+  color: var(--gold);
+}
+
+/* ── Input ── */
+.inputWrap {
+  width: min(460px, 88vw);
+  margin-bottom: 1.5rem;
+  display: none;
+}
+
+.inputWrapVisible {
+  display: block;
+}
+
+.answer {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--gold-dim);
+  padding: 0.8rem 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--text);
+  outline: none;
+  text-align: center;
+  caret-color: var(--gold);
+  transition: border-color 0.4s;
+  resize: none;
+  overflow: hidden;
+  min-height: 2.5rem;
+  display: block;
+}
+
+.answer::placeholder {
+  color: var(--muted);
+}
+
+.answer:focus {
+  border-bottom-color: rgba(201, 168, 76, 0.65);
+}
+
+/* ── Principle seeds (selected) ── */
+.seeds {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  width: min(460px, 88vw);
+  margin-bottom: 1.2rem;
+}
+
+.seedsVisible {
+  display: flex;
+}
+
+.seed {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid rgba(122, 156, 126, 0.35);
+  color: rgba(122, 156, 126, 0.8);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  animation: pop 0.3s ease forwards;
+  opacity: 0;
+}
+
+.seed:hover {
+  border-color: rgba(194, 107, 58, 0.5);
+  color: rgba(194, 107, 58, 0.9);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Suggestion pills ── */
+.suggests {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  width: min(460px, 88vw);
+  margin-bottom: 1.5rem;
+}
+
+.suggestsVisible {
+  display: flex;
+}
+
+.pill {
+  padding: 0.22rem 0.68rem;
+  border: 1px solid rgba(237, 232, 218, 0.1);
+  color: rgba(237, 232, 218, 0.22);
+  font-size: 0.67rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: none;
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+.pill:hover {
+  border-color: var(--gold-dim);
+  color: rgba(201, 168, 76, 0.65);
+}
+
+.pillUsed {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* ── Voices ── */
+.voices {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  width: min(540px, 90vw);
+  margin-bottom: 2rem;
+}
+
+.voicesVisible {
+  display: flex;
+}
+
+.voice {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(0.75rem, 1.6vw, 0.88rem);
+  color: rgba(237, 232, 218, 0.45);
+  padding: 0.28rem 0.65rem;
+  border: 1px solid rgba(237, 232, 218, 0.07);
+  opacity: 0;
+  animation: fadeV 0.6s ease forwards;
+  transition: filter 1.2s ease;
+  filter: blur(7px);
+}
+
+@keyframes fadeV {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Your mark ── */
+.yourMark {
+  display: none;
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  max-width: 400px;
+  padding: 0 2rem;
+  transition: opacity 0.8s ease;
+}
+
+.yourMarkVisible {
+  display: block;
+}
+
+/* ── Share row ── */
+.shareRow {
+  display: none;
+  gap: 0.55rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.shareRowVisible {
+  display: flex;
+}
+
+.shareBtn {
+  background: none;
+  border: 1px solid rgba(237, 232, 218, 0.1);
+  color: var(--muted);
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.shareBtn:hover {
+  border-color: var(--gold-dim);
+  color: rgba(201, 168, 76, 0.7);
+}
+
+/* ── Shift list (return visit deltas) ── */
+.shiftList {
+  display: none;
+  list-style: none;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: min(380px, 86vw);
+  margin-bottom: 1.5rem;
+}
+
+.shiftListVisible {
+  display: flex;
+}
+
+.shift {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 0.76rem;
+  color: rgba(237, 232, 218, 0.35);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.sdot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.48rem;
+}
+
+/* ── Submit / action button ── */
+.btn {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: rgba(201, 168, 76, 0.75);
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.67rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 0.85rem 2.6rem;
+  cursor: pointer;
+  transition:
+    all 0.4s ease,
+    opacity 0.75s ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.btnVisible {
+  opacity: 1;
+}
+
+.btn:hover:not([aria-disabled='true']) {
+  border-color: rgba(201, 168, 76, 0.65);
+  color: var(--gold);
+  box-shadow: 0 0 28px rgba(201, 168, 76, 0.1);
+}
+
+.btn[aria-disabled='true'] {
+  opacity: 0.2;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* ── Flash overlay ── */
+.flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(201, 168, 76, 0.13) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* ── Rise animation (used by btn) ── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
