@@ -466,7 +466,7 @@ export default function Journey({
       }
     }, 300)
     return () => clearTimeout(t)
-  }, [visitType, delta, goReturn, goArrival])
+  }, [visitType, delta, goReturn, goMission])
 
   // R key: jump to return flow from reveal screen
   useEffect(() => {
