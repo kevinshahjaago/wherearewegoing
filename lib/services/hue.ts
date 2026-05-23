@@ -1,8 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-// Spread of representative hues used for ambient/seeded lights before real hues arrive
-export const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
-
 // Compact prompt — ~40 tokens in, 3 tokens out. ~$0.00004 per call on Haiku.
 const PROMPT = (mission: string) =>
   `Mission: "${mission}"\nHue 0-359 for its essence (0=fire, 35=love, 55=hope, 130=nature, 170=peace, 220=wisdom, 280=creativity, 320=community). Integer only.`

@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
-import { THEME_HUES } from '@/lib/services/hue'
+
+// Mirrors the theme hues in lib/services/hue.ts — kept here as a plain constant
+// so this client component never imports the server-only Anthropic SDK.
+const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
 
 export type EarthCanvasHandle = {
   addLights: (n: number, geo?: { lat: number; lng: number }, hue?: number) => void
