@@ -42,7 +42,9 @@
 .suggests,
 .exploreToggle,
 .exploreList,
-.returnAction {
+.returnAction,
+.reframeNotice,
+.reframeDismiss {
   pointer-events: auto;
 }
 
@@ -194,8 +196,8 @@
 
 .pill {
   padding: 0.22rem 0.68rem;
-  border: 1px solid rgba(237, 232, 218, 0.1);
-  color: rgba(237, 232, 218, 0.22);
+  border: 1px solid rgba(237, 232, 218, 0.22);
+  color: rgba(237, 232, 218, 0.58);
   font-size: 0.67rem;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -205,8 +207,8 @@
 }
 
 .pill:hover {
-  border-color: var(--gold-dim);
-  color: rgba(201, 168, 76, 0.65);
+  border-color: rgba(201, 168, 76, 0.55);
+  color: rgba(201, 168, 76, 0.85);
 }
 
 .pillUsed {
@@ -266,12 +268,68 @@
   }
 }
 
+/* ── Hue meaning hint (shown on reveal screen) ── */
+.hueHint {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(237, 232, 218, 0.42);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+/* ── Reframe transparency notice ── */
+.reframeNotice {
+  width: min(400px, 88vw);
+  padding: 1rem 1.4rem 0.8rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: rgba(201, 168, 76, 0.04);
+  text-align: center;
+}
+
+.reframeExplanation {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: rgba(237, 232, 218, 0.72);
+  line-height: 1.65;
+  margin-bottom: 0.65rem;
+}
+
+.reframeOriginal {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(237, 232, 218, 0.42);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.reframeDismiss {
+  background: none;
+  border: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.55);
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s;
+}
+
+.reframeDismiss:hover {
+  color: rgba(201, 168, 76, 0.85);
+}
+
 /* ── Single cycling voice ── */
 .cycleVoice {
   font-family: var(--font-cormorant), serif;
   font-style: italic;
-  font-size: clamp(1rem, 2.4vw, 1.3rem);
-  color: rgba(237, 232, 218, 0.58);
+  font-size: clamp(1.05rem, 2.6vw, 1.4rem);
+  color: rgba(237, 232, 218, 0.82);
   text-align: center;
   max-width: 400px;
   padding: 0 2rem;
@@ -289,7 +347,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.18em;
-  color: rgba(237, 232, 218, 0.6);
+  color: rgba(237, 232, 218, 0.78);
   text-transform: uppercase;
   margin-bottom: 1.8rem;
 }
@@ -348,7 +406,7 @@
 .shareBtn {
   background: none;
   border: none;
-  color: rgba(237, 232, 218, 0.32);
+  color: rgba(237, 232, 218, 0.58);
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.56rem;
   letter-spacing: 0.14em;
@@ -360,7 +418,7 @@
 }
 
 .shareBtn:hover {
-  color: rgba(201, 168, 76, 0.7);
+  color: rgba(201, 168, 76, 0.9);
 }
 
 /* ── Previous mission (return visit) ── */
@@ -383,7 +441,7 @@
   font-size: 0.5rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(237, 232, 218, 0.3);
+  color: rgba(237, 232, 218, 0.55);
   margin-bottom: 0.35rem;
 }
 
@@ -406,7 +464,7 @@
   gap: 0.6rem;
   align-items: flex-start;
   font-size: 0.76rem;
-  color: rgba(237, 232, 218, 0.7);
+  color: rgba(237, 232, 218, 0.85);
   line-height: 1.6;
   text-align: left;
 }
@@ -459,7 +517,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.58rem;
   letter-spacing: 0.16em;
-  color: rgba(237, 232, 218, 0.65);
+  color: rgba(237, 232, 218, 0.82);
   text-transform: uppercase;
   margin-bottom: 0.75rem;
   display: flex;
@@ -497,7 +555,7 @@
   text-transform: uppercase;
   padding: 0.4rem 1rem;
   cursor: pointer;
-  color: rgba(237, 232, 218, 0.5);
+  color: rgba(237, 232, 218, 0.65);
   transition: all 0.25s;
 }
 
@@ -507,7 +565,7 @@
 }
 
 .modeBtn:hover:not(.modeBtnActive) {
-  color: rgba(237, 232, 218, 0.75);
+  color: rgba(237, 232, 218, 0.88);
 }
 
 /* ── Explore all visions ── */
@@ -518,7 +576,7 @@
   font-size: 0.55rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(237, 232, 218, 0.45);
+  color: rgba(237, 232, 218, 0.65);
   cursor: pointer;
   padding: 0.3rem 0;
   margin-bottom: 0.8rem;
@@ -531,7 +589,7 @@
 }
 
 .exploreToggle:hover {
-  color: rgba(237, 232, 218, 0.75);
+  color: rgba(237, 232, 218, 0.92);
 }
 
 .exploreList {
@@ -571,8 +629,8 @@
 .exploreMission {
   font-family: var(--font-cormorant), serif;
   font-style: italic;
-  font-size: clamp(0.82rem, 1.8vw, 0.96rem);
-  color: rgba(237, 232, 218, 0.72);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  color: rgba(237, 232, 218, 0.92);
   line-height: 1.45;
 }
 
@@ -580,7 +638,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
-  color: rgba(237, 232, 218, 0.35);
+  color: rgba(237, 232, 218, 0.55);
   margin-top: 0.15rem;
   flex-shrink: 0;
 }
@@ -594,10 +652,10 @@
 
 .explorePrinciple {
   font-family: var(--font-dm-sans), sans-serif;
-  font-size: 0.5rem;
+  font-size: 0.52rem;
   letter-spacing: 0.04em;
-  color: rgba(122, 156, 126, 0.6);
-  border: 1px solid rgba(122, 156, 126, 0.2);
+  color: rgba(122, 156, 126, 0.88);
+  border: 1px solid rgba(122, 156, 126, 0.38);
   padding: 0.12rem 0.4rem;
 }
 
@@ -692,7 +750,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.14em;
-  color: rgba(237, 232, 218, 0.5);
+  color: rgba(237, 232, 218, 0.65);
   text-transform: uppercase;
   margin-top: 0.3rem;
   margin-bottom: 0.5rem;
@@ -702,7 +760,7 @@
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
-  color: rgba(237, 232, 218, 0.3);
+  color: rgba(237, 232, 218, 0.5);
   text-transform: uppercase;
   margin-top: 0.8rem;
 }
@@ -715,7 +773,7 @@
   font-size: 0.52rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(237, 232, 218, 0.3);
+  color: rgba(237, 232, 218, 0.55);
   cursor: pointer;
   padding: 0.3rem 0;
   margin-top: 0.5rem;
@@ -723,7 +781,7 @@
 }
 
 .returnAction:hover {
-  color: rgba(237, 232, 218, 0.65);
+  color: rgba(237, 232, 218, 0.85);
 }
 
 /* ── Rise animation (used by btn) ── */

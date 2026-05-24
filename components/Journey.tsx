@@ -178,6 +178,11 @@ export default function Journey({
   const [returnInputOpen, setReturnInputOpen] = useState(false)
   // null = session check in progress, 'first' | 'return' = determined
   const [visitType, setVisitType] = useState<'first' | 'return' | null>(null)
+  const [reframeNotice, setReframeNotice] = useState<{
+    originalMission: string
+    type: 'obscenity' | 'harm'
+    explanation: string
+  } | null>(null)
 
   const earthRef = useRef<EarthCanvasHandle>(null)
   const questionRef = useRef<HTMLDivElement>(null)
@@ -308,6 +313,12 @@ export default function Journey({
     ])
     setLocationPromptVisible(false)
 
+    type ContributeResponse = {
+      success: boolean
+      hue?: number
+      reframe?: { originalMission: string; type: 'obscenity' | 'harm'; explanation: string }
+    }
+
     const contributeFetch = fetch('/api/contribute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -325,17 +336,20 @@ export default function Journey({
           r.json()
             .then((b) => console.error('[contribute]', r.status, b))
             .catch(() => null)
-          return undefined as number | undefined
+          return undefined as ContributeResponse | undefined
         }
-        const body = (await r.json()) as { success: boolean; hue?: number }
-        return body.hue
+        return r.json() as Promise<ContributeResponse>
       })
       .catch((e: unknown) => {
         console.error('[contribute]', e)
-        return undefined as number | undefined
+        return undefined as ContributeResponse | undefined
       })
 
-    const [, , userHue] = await Promise.all([animDone, voicesFetch, contributeFetch])
+    const [, , contributeResult] = await Promise.all([animDone, voicesFetch, contributeFetch])
+    const userHue = contributeResult?.hue
+    if (contributeResult?.reframe) {
+      setReframeNotice(contributeResult.reframe)
+    }
     // Re-fetch voices fresh so the just-submitted vision is included
     const freshVoices = await fetch('/api/voices')
       .then(
@@ -601,6 +615,28 @@ export default function Journey({
       '_blank',
       'noopener,noreferrer'
     )
+  }, [])
+
+  const shareSMS = useCallback(() => {
+    track('share_clicked', { channel: 'sms' })
+    window.open(`sms:?body=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`, '_self')
+  }, [])
+
+  // Web Share API — on mobile opens the native share sheet (Instagram, TikTok, YouTube, etc.)
+  const shareNative = useCallback(async () => {
+    track('share_clicked', { channel: 'native' })
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Where are we going?', text: SHARE_TEXT, url: SHARE_URL })
+      } else {
+        // fallback: copy link
+        await navigator.clipboard.writeText(`${SHARE_TEXT} ${SHARE_URL}`)
+        setCopyLabel(copy.reveal.copied)
+        setTimeout(() => setCopyLabel(copy.reveal.copyLink), 2000)
+      }
+    } catch {
+      /* user cancelled or clipboard unavailable */
+    }
   }, [])
 
   const handleBtn = useCallback(() => {
@@ -968,6 +1004,12 @@ export default function Journey({
         </div>
 
         {step === 5 && (
+          <p className={styles.hueHint} aria-label="Similar colors hold similar visions">
+            Similar colors · similar visions
+          </p>
+        )}
+
+        {step === 5 && (
           <div className={styles.statsBar}>
             <span>{liveContributions.toLocaleString()} visions</span>
             {contributorCount > 0 && (
@@ -1100,6 +1142,20 @@ export default function Journey({
           />
         </div>
 
+        {reframeNotice && step === 5 && (
+          <div role="status" aria-live="polite" className={styles.reframeNotice}>
+            <p className={styles.reframeExplanation}>{reframeNotice.explanation}</p>
+            <p className={styles.reframeOriginal}>&ldquo;{reframeNotice.originalMission}&rdquo;</p>
+            <button
+              className={styles.reframeDismiss}
+              onClick={() => setReframeNotice(null)}
+              aria-label="Acknowledge and dismiss"
+            >
+              I understand ✦
+            </button>
+          </div>
+        )}
+
         <div
           role="group"
           aria-label="Share options"
@@ -1116,6 +1172,12 @@ export default function Journey({
           </button>
           <button className={styles.shareBtn} onClick={shareWhatsApp}>
             WhatsApp
+          </button>
+          <button className={styles.shareBtn} onClick={shareSMS}>
+            Text
+          </button>
+          <button className={styles.shareBtn} onClick={() => void shareNative()}>
+            Share ↗
           </button>
           <button className={styles.shareBtn} onClick={copyLink}>
             {copyLabel}
