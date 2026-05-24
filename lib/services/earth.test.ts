@@ -1,4 +1,12 @@
-import { getEarthFill, getRecentVisions, getTotalContributions, deriveValuesHue } from './earth'
+import {
+  getEarthFill,
+  getRecentVisions,
+  getTotalContributions,
+  getCountryCount,
+  getPrincipleCount,
+  getUniqueContributorCount,
+  deriveValuesHue,
+} from './earth'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
 
 function makeSupabase(overrides: Record<string, unknown> = {}) {
@@ -105,6 +113,82 @@ describe('getRecentVisions', () => {
     } as unknown as Parameters<typeof getRecentVisions>[0]
 
     expect(await getRecentVisions(supabase)).toHaveLength(0)
+  })
+})
+
+describe('getCountryCount', () => {
+  function makeSupabaseWithNot(notData: unknown[]) {
+    return {
+      from: () => ({
+        select: () => ({
+          not: () => Promise.resolve({ data: notData }),
+        }),
+      }),
+    } as unknown as Parameters<typeof getCountryCount>[0]
+  }
+
+  it('counts unique country codes', async () => {
+    const supabase = makeSupabaseWithNot([
+      { country_code: 'US' },
+      { country_code: 'GB' },
+      { country_code: 'US' },
+    ])
+    expect(await getCountryCount(supabase)).toBe(2)
+  })
+
+  it('returns 0 when data is null', async () => {
+    const supabase = makeSupabaseWithNot([])
+    expect(await getCountryCount(supabase)).toBe(0)
+  })
+})
+
+describe('getPrincipleCount', () => {
+  function makeSupabaseWithSelect(selectData: unknown[]) {
+    return {
+      from: () => ({
+        select: () => Promise.resolve({ data: selectData }),
+      }),
+    } as unknown as Parameters<typeof getPrincipleCount>[0]
+  }
+
+  it('sums total principles across all contributions', async () => {
+    const supabase = makeSupabaseWithSelect([
+      { principles: ['Care precedes transaction', 'Interdependence'] },
+      { principles: ['Long-term thinking'] },
+      { principles: null },
+    ])
+    expect(await getPrincipleCount(supabase)).toBe(3)
+  })
+
+  it('returns 0 when data is null', async () => {
+    const supabase = makeSupabaseWithSelect([])
+    expect(await getPrincipleCount(supabase)).toBe(0)
+  })
+})
+
+describe('getUniqueContributorCount', () => {
+  function makeSupabaseWithNot(notData: unknown[]) {
+    return {
+      from: () => ({
+        select: () => ({
+          not: () => Promise.resolve({ data: notData }),
+        }),
+      }),
+    } as unknown as Parameters<typeof getUniqueContributorCount>[0]
+  }
+
+  it('counts unique visitor ids', async () => {
+    const supabase = makeSupabaseWithNot([
+      { visitor_id: 'uuid-1' },
+      { visitor_id: 'uuid-2' },
+      { visitor_id: 'uuid-1' },
+    ])
+    expect(await getUniqueContributorCount(supabase)).toBe(2)
+  })
+
+  it('returns 0 when data is null', async () => {
+    const supabase = makeSupabaseWithNot([])
+    expect(await getUniqueContributorCount(supabase)).toBe(0)
   })
 })
 
