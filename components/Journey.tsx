@@ -1134,6 +1134,17 @@ export default function Journey({
           {btnLabel}
         </button>
 
+        <p
+          className={`${styles.disclosure}${step <= 1 ? ` ${styles.disclosureVisible}` : ''}`}
+          aria-hidden="true"
+        >
+          A collaboration of{' '}
+          <a href="https://jaago.life" target="_blank" rel="noopener noreferrer">
+            Jaago.life
+          </a>{' '}
+          &amp; Claude AI &middot; AI assists with safety and the hue of your light
+        </p>
+
         {step === 5 && visitType === 'return' && !yourMark && !returnInputOpen && (
           <button className={styles.returnAction} onClick={openReturnInput}>
             Add today&apos;s light

@@ -801,6 +801,28 @@
   margin-top: 0.8rem;
 }
 
+/* ── Opening disclosure (visible on arrival + mission steps only) ── */
+.disclosure {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  color: rgba(237, 232, 218, 0);
+  text-align: center;
+  margin-top: 0.75rem;
+  transition: color 0.6s ease;
+}
+
+.disclosureVisible {
+  color: rgba(237, 232, 218, 0.32);
+}
+
+.disclosure a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  pointer-events: auto;
+}
+
 /* ── Return hint sentence (shown on reveal screen instead of disabled btn) ── */
 .returnHint {
   font-family: var(--font-dm-sans), sans-serif;
