@@ -6,6 +6,7 @@ export type VisionItem = {
   missionHue: number
   valuesHue: number
   countryCode: string | null
+  principles: string[]
 }
 
 // Deterministic hue from a principle string (for custom or unknown principles).
@@ -54,6 +55,7 @@ export async function getRecentVisions(
     missionHue: (r.hue as number | null) ?? 45,
     valuesHue: deriveValuesHue((r.principles as string[]) ?? []),
     countryCode: (r.country_code as string | null) ?? null,
+    principles: (r.principles as string[]) ?? [],
   }))
 
   return pool.sort(() => Math.random() - 0.5).slice(0, limit)

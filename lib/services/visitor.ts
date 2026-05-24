@@ -10,6 +10,7 @@ export type UpsertResult = {
   isReturn: boolean
   delta: Delta | null
   visitCount: number
+  lastMission: string | null
 }
 
 async function computeDelta(supabase: SupabaseClient, since: string): Promise<Delta> {
@@ -41,6 +42,17 @@ async function computeDelta(supabase: SupabaseClient, since: string): Promise<De
   return { newVoices: countRes.count ?? 0, trendingPrinciple, newCountries }
 }
 
+async function getLastMission(supabase: SupabaseClient, userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('contributions')
+    .select('mission')
+    .eq('visitor_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return (data?.mission as string | null) ?? null
+}
+
 export async function upsertVisitor(
   supabase: SupabaseClient,
   {
@@ -63,7 +75,10 @@ export async function upsertVisitor(
     .maybeSingle()
 
   if (existing) {
-    const delta = await computeDelta(supabase, existing.last_seen_at as string)
+    const [delta, lastMission] = await Promise.all([
+      computeDelta(supabase, existing.last_seen_at as string),
+      getLastMission(supabase, userId),
+    ])
     const visitCount = (existing.visit_count as number) + 1
     await supabase
       .from('visitors')
@@ -75,14 +90,14 @@ export async function upsertVisitor(
         ...(geolocation ? { geolocation } : {}),
       })
       .eq('id', userId)
-    return { isReturn: true, delta, visitCount }
+    return { isReturn: true, delta, visitCount, lastMission }
   }
 
   // Fingerprint fallback: localStorage was cleared but same device
   let priorLastSeen: string | null = null
   const { data: prior } = await supabase
     .from('visitors')
-    .select('last_seen_at')
+    .select('id, last_seen_at')
     .eq('fingerprint', fingerprint)
     .maybeSingle()
   if (prior) priorLastSeen = prior.last_seen_at as string
@@ -96,9 +111,13 @@ export async function upsertVisitor(
   })
 
   if (priorLastSeen) {
-    const delta = await computeDelta(supabase, priorLastSeen)
-    return { isReturn: true, delta, visitCount: 1 }
+    const priorId = prior?.id as string | undefined
+    const [delta, lastMission] = await Promise.all([
+      computeDelta(supabase, priorLastSeen),
+      priorId ? getLastMission(supabase, priorId) : Promise.resolve(null),
+    ])
+    return { isReturn: true, delta, visitCount: 1, lastMission }
   }
 
-  return { isReturn: false, delta: null, visitCount: 1 }
+  return { isReturn: false, delta: null, visitCount: 1, lastMission: null }
 }

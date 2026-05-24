@@ -50,22 +50,84 @@ const FALLBACK_VISIONS: VisionItem[] = [
     missionHue: 210,
     valuesHue: 170,
     countryCode: null,
+    principles: ['Long-term thinking', 'Care precedes transaction'],
   },
-  { mission: 'To understand itself', missionHue: 280, valuesHue: 220, countryCode: null },
-  { mission: 'To love without keeping score', missionHue: 35, valuesHue: 30, countryCode: null },
-  { mission: 'To leave it better', missionHue: 130, valuesHue: 130, countryCode: null },
-  { mission: 'To protect what is fragile', missionHue: 170, valuesHue: 170, countryCode: null },
-  { mission: 'To be present', missionHue: 55, valuesHue: 170, countryCode: null },
-  { mission: 'To repair what is broken', missionHue: 15, valuesHue: 15, countryCode: null },
-  { mission: 'To see each other clearly', missionHue: 240, valuesHue: 280, countryCode: null },
-  { mission: 'That the future gets a vote', missionHue: 220, valuesHue: 220, countryCode: null },
-  { mission: 'To mean what we say', missionHue: 280, valuesHue: 280, countryCode: null },
-  { mission: 'To act as if we are responsible', missionHue: 130, valuesHue: 55, countryCode: null },
+  {
+    mission: 'To understand itself',
+    missionHue: 280,
+    valuesHue: 220,
+    countryCode: null,
+    principles: ['Curiosity over certainty'],
+  },
+  {
+    mission: 'To love without keeping score',
+    missionHue: 35,
+    valuesHue: 30,
+    countryCode: null,
+    principles: ['Care precedes transaction', 'Presence as practice'],
+  },
+  {
+    mission: 'To leave it better',
+    missionHue: 130,
+    valuesHue: 130,
+    countryCode: null,
+    principles: ['Long-term thinking', 'Repair over perfection'],
+  },
+  {
+    mission: 'To protect what is fragile',
+    missionHue: 170,
+    valuesHue: 170,
+    countryCode: null,
+    principles: ['Interdependence', 'Local action'],
+  },
+  {
+    mission: 'To be present',
+    missionHue: 55,
+    valuesHue: 170,
+    countryCode: null,
+    principles: ['Presence as practice'],
+  },
+  {
+    mission: 'To repair what is broken',
+    missionHue: 15,
+    valuesHue: 15,
+    countryCode: null,
+    principles: ['Repair over perfection', 'Truth-telling as kindness'],
+  },
+  {
+    mission: 'To see each other clearly',
+    missionHue: 240,
+    valuesHue: 280,
+    countryCode: null,
+    principles: ['Truth-telling as kindness', 'Curiosity over certainty'],
+  },
+  {
+    mission: 'That the future gets a vote',
+    missionHue: 220,
+    valuesHue: 220,
+    countryCode: null,
+    principles: ['Long-term thinking', 'Interdependence'],
+  },
+  {
+    mission: 'To mean what we say',
+    missionHue: 280,
+    valuesHue: 280,
+    countryCode: null,
+    principles: ['Truth-telling as kindness'],
+  },
+  {
+    mission: 'To act as if we are responsible',
+    missionHue: 130,
+    valuesHue: 55,
+    countryCode: null,
+    principles: ['Interdependence', 'Local action'],
+  },
   {
     mission: 'To stop treating people as problems',
     missionHue: 310,
     valuesHue: 30,
     countryCode: null,
+    principles: ['Care precedes transaction', 'Presence as practice'],
   },
 ]
 
@@ -106,6 +168,7 @@ export default function Journey({
   const [btnDisabled, setBtnDisabled] = useState(false)
   const [inputError, setInputError] = useState(false)
   const [locationPromptVisible, setLocationPromptVisible] = useState(false)
+  const [lastMission, setLastMission] = useState<string | null>(null)
   // null = session check in progress, 'first' | 'return' = determined
   const [visitType, setVisitType] = useState<'first' | 'return' | null>(null)
 
@@ -154,7 +217,14 @@ export default function Journey({
   // Declared before goContribute which calls it
   const goReveal = useCallback(
     (fetched: { visions: VisionItem[]; countryCount: number } | null = null) => {
-      const visions = fetched && fetched.visions.length > 0 ? fetched.visions : FALLBACK_VISIONS
+      // Blend real visions with fallbacks so there's always enough variety to cycle through
+      const real = fetched?.visions ?? []
+      const padded = [...real]
+      for (const fb of FALLBACK_VISIONS) {
+        if (padded.length >= 12) break
+        padded.push(fb)
+      }
+      const visions = padded.length > 0 ? padded : FALLBACK_VISIONS
       track('voices_revealed')
       setStep(5)
       setYourMark(`"${missionText.current}"`)
@@ -227,14 +297,18 @@ export default function Journey({
         return undefined as number | undefined
       })
 
-    const [, fetched, userHue] = await Promise.all([animDone, voicesFetch, contributeFetch])
+    const [, , userHue] = await Promise.all([animDone, voicesFetch, contributeFetch])
+    // Re-fetch voices fresh so the just-submitted vision is included
+    const freshVoices = await fetch('/api/voices')
+      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .catch(() => null)
     earthRef.current?.pulseUserLight(
       geo ?? undefined,
       userHue,
       deriveClientValuesHue(principlesRef.current)
     )
     if (userHue !== undefined) setLiveContributions((n) => n + 1)
-    goReveal(fetched ?? null)
+    goReveal(freshVoices ?? null)
   }, [transitionQuestion, goReveal])
 
   const goCommitment = useCallback(() => {
@@ -484,10 +558,15 @@ export default function Journey({
         if (cancelled) return
 
         if (res.ok) {
-          const data = (await res.json()) as { isReturn: boolean; delta: Delta | null }
+          const data = (await res.json()) as {
+            isReturn: boolean
+            delta: Delta | null
+            lastMission: string | null
+          }
           if (!cancelled) {
             clearTimeout(fallback) // API answered — cancel so it can't overwrite visitType
             setDelta(data.delta)
+            setLastMission(data.lastMission ?? null)
             setVisitType(data.isReturn ? 'return' : 'first')
           }
           return
@@ -647,6 +726,13 @@ export default function Journey({
           )}
         </div>
 
+        {shiftsVisible && lastMission && (
+          <div className={styles.lastMission}>
+            <span className={styles.lastMissionLabel}>Your last light</span>
+            &ldquo;{lastMission}&rdquo;
+          </div>
+        )}
+
         <ul
           aria-label="What has changed since your last visit"
           className={`${styles.shiftList}${shiftsVisible ? ` ${styles.shiftListVisible}` : ''}`}
@@ -788,6 +874,15 @@ export default function Journey({
               />
               <div>
                 <p className={styles.exploreMission}>&ldquo;{v.mission}&rdquo;</p>
+                {v.principles.length > 0 && (
+                  <div className={styles.explorePrinciples}>
+                    {v.principles.slice(0, 3).map((p) => (
+                      <span key={p} className={styles.explorePrinciple}>
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {v.countryCode && <p className={styles.exploreCountry}>{v.countryCode}</p>}
               </div>
             </div>
