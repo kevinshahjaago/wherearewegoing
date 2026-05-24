@@ -92,13 +92,20 @@ async function main() {
   console.log('🎬  Encoding MP4...')
   ffmpeg(
     '-y',
-    '-framerate', String(FPS),
-    '-i', path.join(FRAMES_DIR, 'frame-%04d.png'),
-    '-c:v', 'libx264',
-    '-pix_fmt', 'yuv420p',
-    '-crf', '23',
-    '-movflags', '+faststart',
-    '-vf', `scale=${SIZE}:${SIZE},fade=in:0:15:color=black,fade=out:${CAPTURED_FRAMES - 15}:15:color=black`,
+    '-framerate',
+    String(FPS),
+    '-i',
+    path.join(FRAMES_DIR, 'frame-%04d.png'),
+    '-c:v',
+    'libx264',
+    '-pix_fmt',
+    'yuv420p',
+    '-crf',
+    '23',
+    '-movflags',
+    '+faststart',
+    '-vf',
+    `scale=${SIZE}:${SIZE},fade=in:0:15:color=black,fade=out:${CAPTURED_FRAMES - 15}:15:color=black`,
     OUT_MP4
   )
 
@@ -111,17 +118,23 @@ async function main() {
 
   ffmpeg(
     '-y',
-    '-framerate', String(FPS),
-    '-i', path.join(FRAMES_DIR, 'frame-%04d.png'),
-    '-vf', `${fadeFilter},palettegen=stats_mode=diff`,
+    '-framerate',
+    String(FPS),
+    '-i',
+    path.join(FRAMES_DIR, 'frame-%04d.png'),
+    '-vf',
+    `${fadeFilter},palettegen=stats_mode=diff`,
     palette
   )
 
   ffmpeg(
     '-y',
-    '-framerate', String(FPS),
-    '-i', path.join(FRAMES_DIR, 'frame-%04d.png'),
-    '-i', palette,
+    '-framerate',
+    String(FPS),
+    '-i',
+    path.join(FRAMES_DIR, 'frame-%04d.png'),
+    '-i',
+    palette,
     '-filter_complex',
     `[0:v]${fadeFilter}[faded];[faded][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
     OUT_GIF
@@ -133,8 +146,10 @@ async function main() {
   const ogSource = path.join(FRAMES_DIR, `frame-${String(90).padStart(4, '0')}.png`)
   ffmpeg(
     '-y',
-    '-i', ogSource,
-    '-vf', 'scale=1200:630:force_original_aspect_ratio=increase,crop=1200:630',
+    '-i',
+    ogSource,
+    '-vf',
+    'scale=1200:630:force_original_aspect_ratio=increase,crop=1200:630',
     OUT_OG
   )
 

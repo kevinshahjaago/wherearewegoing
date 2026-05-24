@@ -212,7 +212,7 @@ export default function EarthCanvas({
       }))
     }
 
-    function seedLights() {
+    function _seedLights() {
       s.lights = []
       const count = Math.max(12, Math.floor(s.earthFill * 370))
       const isAmbient = s.earthFill === 0

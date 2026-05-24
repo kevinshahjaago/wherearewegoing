@@ -190,7 +190,7 @@ export default function Journey({
       setTimeout(() => setCycleVoiceVisible(true), 1200)
       setTimeout(() => setShareRowVisible(true), 2800)
     },
-    [transitionQuestion, showBtn]
+    [transitionQuestion]
   )
 
   const goContribute = useCallback(async () => {
