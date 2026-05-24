@@ -6,7 +6,7 @@ import { getBrowserFingerprint } from '@/lib/fingerprint'
 import { track } from '@/lib/analytics/client'
 import { getGeolocation } from '@/lib/geolocation'
 import { createClient } from '@/lib/supabase/client'
-import EarthCanvas, { type EarthCanvasHandle, type EarthMode } from './EarthCanvas'
+import EarthCanvas, { type EarthCanvasHandle } from './EarthCanvas'
 import type { VisionItem } from '@/lib/services/earth'
 import styles from './Journey.module.css'
 
@@ -150,10 +150,10 @@ export default function Journey({
   const [principles, setPrinciples] = useState<string[]>([])
   const [usedSeeds, setUsedSeeds] = useState<Set<string>>(new Set())
   const [displayVisions, setDisplayVisions] = useState<VisionItem[]>(FALLBACK_VISIONS)
+  const [realVisions, setRealVisions] = useState<VisionItem[]>([])
   const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
   const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
   const [countryCount, setCountryCount] = useState(0)
-  const [earthMode, setEarthMode] = useState<EarthMode>('mission')
   const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
@@ -218,8 +218,10 @@ export default function Journey({
   // Declared before goContribute which calls it
   const goReveal = useCallback(
     (fetched: { visions: VisionItem[]; countryCount: number } | null = null) => {
-      // Blend real visions with fallbacks so there's always enough variety to cycle through
+      // Real visions shown in the explore list (no fallbacks — count must match stats bar)
       const real = fetched?.visions ?? []
+      setRealVisions(real)
+      // Cycling voice blends in fallbacks for variety when DB is sparse
       const padded = [...real]
       for (const fb of FALLBACK_VISIONS) {
         if (padded.length >= 12) break
@@ -533,7 +535,17 @@ export default function Journey({
         }
         break
     }
-  }, [step, btnDisabled, returnInputOpen, goMission, goPrinciples, goCommitment, goContribute, goContributeReturn, goExploreOnly])
+  }, [
+    step,
+    btnDisabled,
+    returnInputOpen,
+    goMission,
+    goPrinciples,
+    goCommitment,
+    goContribute,
+    goContributeReturn,
+    goExploreOnly,
+  ])
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -640,11 +652,6 @@ export default function Journey({
     }, 300)
     return () => clearTimeout(t)
   }, [visitType, delta, goReturn, goMission])
-
-  // Sync earth mode when toggle changes
-  useEffect(() => {
-    earthRef.current?.setMode(earthMode)
-  }, [earthMode])
 
   // R key: jump to return flow from reveal screen (not while typing)
   useEffect(() => {
@@ -869,29 +876,8 @@ export default function Journey({
           </div>
         )}
 
-        <div
-          role="group"
-          aria-label="Earth color mode"
-          className={`${styles.modeToggle}${step === 5 ? ` ${styles.modeToggleVisible}` : ''}`}
-        >
-          <button
-            className={`${styles.modeBtn}${earthMode === 'mission' ? ` ${styles.modeBtnActive}` : ''}`}
-            onClick={() => setEarthMode('mission')}
-            aria-pressed={earthMode === 'mission'}
-          >
-            {copy.reveal.modeToggleMission}
-          </button>
-          <button
-            className={`${styles.modeBtn}${earthMode === 'values' ? ` ${styles.modeBtnActive}` : ''}`}
-            onClick={() => setEarthMode('values')}
-            aria-pressed={earthMode === 'values'}
-          >
-            {copy.reveal.modeToggleValues}
-          </button>
-        </div>
-
         <button
-          className={`${styles.exploreToggle}${step === 5 ? ` ${styles.exploreToggleVisible}` : ''}`}
+          className={`${styles.exploreToggle}${step === 5 && realVisions.length > 0 ? ` ${styles.exploreToggleVisible}` : ''}`}
           onClick={() => setExploreOpen((o) => !o)}
         >
           {exploreOpen ? copy.reveal.exploreCollapse : copy.reveal.exploreAll}
@@ -900,15 +886,13 @@ export default function Journey({
         <div
           role="region"
           aria-label={copy.reveal.voicesRegionLabel}
-          className={`${styles.exploreList}${exploreOpen ? ` ${styles.exploreListVisible}` : ''}`}
+          className={`${styles.exploreList}${exploreOpen && realVisions.length > 0 ? ` ${styles.exploreListVisible}` : ''}`}
         >
-          {displayVisions.map((v, i) => (
+          {realVisions.map((v, i) => (
             <div key={i} className={styles.exploreItem}>
               <span
                 className={styles.exploreHue}
-                style={{
-                  background: `hsl(${earthMode === 'mission' ? v.missionHue : v.valuesHue},55%,62%)`,
-                }}
+                style={{ background: `hsl(${v.missionHue},55%,62%)` }}
                 aria-hidden="true"
               />
               <div>
