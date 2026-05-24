@@ -739,6 +739,13 @@ export default function Journey({
     return () => document.removeEventListener('visibilitychange', handler)
   }, [step])
 
+  // Auto-dismiss reframe notice after 60 seconds
+  useEffect(() => {
+    if (!reframeNotice) return
+    const t = setTimeout(() => setReframeNotice(null), 60_000)
+    return () => clearTimeout(t)
+  }, [reframeNotice])
+
   // Cycle voices one at a time on the reveal screen
   useEffect(() => {
     if (step !== 5 || displayVisions.length === 0 || exploreOpen) return
