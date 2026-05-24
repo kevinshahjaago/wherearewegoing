@@ -233,6 +233,9 @@ export default function Journey({
     ])
     setLocationPromptVisible(false)
 
+    // Start spinning the earth toward the user's location so the pulse lands facing them
+    if (geo) earthRef.current?.spinToLocation(geo)
+
     type ContributeResponse = {
       success: boolean
       hue?: number

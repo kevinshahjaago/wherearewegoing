@@ -25,6 +25,7 @@ export type EarthCanvasHandle = {
     missionHue?: number,
     valuesHue?: number
   ) => void
+  spinToLocation: (geo: { lat: number; lng: number }) => void
 }
 
 type Star = { x: number; y: number; r: number; a: number; ph: number; sp: number }
@@ -69,6 +70,7 @@ type AnimState = {
   userLight: UserLight | null
   earthFill: number
   earthRot: number
+  spinTarget: number | null
   glowT: number
   rafId: number
   reducedMotion: boolean
@@ -102,6 +104,7 @@ export default function EarthCanvas({
     userLight: null,
     earthFill: initialFill,
     earthRot: Math.PI / 2,
+    spinTarget: null,
     glowT: 0,
     rafId: 0,
     reducedMotion: false,
@@ -169,11 +172,24 @@ export default function EarthCanvas({
     },
     pulseUserLight(geo?: { lat: number; lng: number }, missionHue?: number, valuesHue?: number) {
       const s = anim.current
+      s.spinTarget = null // spin is done; resume normal rotation
       const th = geo ? (geo.lng * Math.PI) / 180 - s.earthRot : Math.random() * Math.PI * 2
       const ph2 = geo ? ((90 - geo.lat) * Math.PI) / 180 : Math.acos(2 * Math.random() - 1)
       const mh = missionHue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
       const vh = valuesHue ?? mh
       s.userLight = { th, ph2, missionHue: mh, valuesHue: vh, phase: 0, elapsed: 0 }
+    },
+    spinToLocation(geo: { lat: number; lng: number }) {
+      const s = anim.current
+      if (s.reducedMotion) return
+      // To bring longitude to the viewer-facing front: sin(lngRad + earthRot) = 1
+      // → lngRad + earthRot = π/2  → target = π/2 - lngRad
+      const lngRad = (geo.lng * Math.PI) / 180
+      let target = Math.PI / 2 - lngRad
+      // Normalise to the equivalent angle closest to current earthRot (shortest arc)
+      while (target - s.earthRot > Math.PI) target -= Math.PI * 2
+      while (target - s.earthRot < -Math.PI) target += Math.PI * 2
+      s.spinTarget = target
     },
   }))
 
@@ -251,7 +267,18 @@ export default function EarthCanvas({
       if (!eC) return
       const ctx = eC.getContext('2d')!
       ctx.clearRect(0, 0, s.W, s.H)
-      s.earthRot -= s.reducedMotion ? 0.0001 : 0.0007
+      if (s.spinTarget !== null) {
+        const diff = s.spinTarget - s.earthRot
+        if (Math.abs(diff) < 0.006) {
+          s.earthRot = s.spinTarget
+          s.spinTarget = null
+        } else {
+          // Ease-out: fast start, decelerates as it approaches the target
+          s.earthRot += diff * 0.038
+        }
+      } else {
+        s.earthRot -= s.reducedMotion ? 0.0001 : 0.0007
+      }
       if (!s.reducedMotion) s.glowT += 0.011
       const R = s.eR,
         { cx, cy } = s
