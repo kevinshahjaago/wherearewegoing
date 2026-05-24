@@ -44,6 +44,10 @@ type Delta = {
 
 const { copy } = EXPERIENCE_CONFIG
 
+function randomPlaceholder(list: readonly string[]): string {
+  return list[Math.floor(Math.random() * list.length)]
+}
+
 export default function Journey({
   earthFill = 0,
   totalContributions = 0,
@@ -338,7 +342,7 @@ export default function Journey({
     setSeedsVisible(false)
     setSuggestsVisible(false)
     transitionQuestion({ line1: copy.mission.line1, line2: copy.mission.line2 }, () =>
-      showInput(copy.mission.placeholder, copy.mission.label)
+      showInput(randomPlaceholder(copy.mission.placeholders), copy.mission.label)
     )
     showBtn(copy.mission.cta)
   }, [transitionQuestion, showBtn, showInput])
@@ -369,7 +373,7 @@ export default function Journey({
   const openReturnInput = useCallback(() => {
     setReturnInputOpen(true)
     transitionQuestion({ line1: copy.return.line1, line2: copy.return.line2 }, () =>
-      showInput(copy.return.placeholder, copy.return.label)
+      showInput(randomPlaceholder(copy.return.placeholders), copy.return.label)
     )
     showBtn('Add my light')
   }, [transitionQuestion, showBtn, showInput])
