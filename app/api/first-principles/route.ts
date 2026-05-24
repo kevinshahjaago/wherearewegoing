@@ -88,7 +88,10 @@ export async function POST(req: Request) {
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text : ''
     // Haiku sometimes wraps output in ```json ... ``` fences — strip them
-    const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/m, '')
+      .replace(/\s*```\s*$/m, '')
+      .trim()
 
     let parsed: { principles?: unknown }
     try {

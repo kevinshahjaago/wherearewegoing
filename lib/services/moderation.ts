@@ -121,7 +121,10 @@ export async function moderateContribution(
     clearTimeout(timeout)
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text : ''
-    const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/m, '')
+      .replace(/\s*```\s*$/m, '')
+      .trim()
 
     let parsed: RawModerationResponse
     try {

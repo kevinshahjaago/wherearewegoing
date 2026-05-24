@@ -44,7 +44,6 @@ type Delta = {
 
 const { copy } = EXPERIENCE_CONFIG
 
-
 export default function Journey({
   earthFill = 0,
   totalContributions = 0,
@@ -1070,9 +1069,7 @@ export default function Journey({
           </div>
         )}
 
-        <div
-          className={`${styles.shareRow}${shareRowVisible ? ` ${styles.shareRowVisible}` : ''}`}
-        >
+        <div className={`${styles.shareRow}${shareRowVisible ? ` ${styles.shareRowVisible}` : ''}`}>
           {!shareExpanded ? (
             <button
               className={styles.inviteBtn}

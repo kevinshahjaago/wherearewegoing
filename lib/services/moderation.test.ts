@@ -225,7 +225,9 @@ describe('graceful degradation (fail open — never block a submission)', () => 
   })
 
   it('uses fallback principles when LLM returns non-array principles field', async () => {
-    stubLLM('{"action":"reframe","type":"harm","mission":"Reframed","principles":"not an array","explanation":"x"}')
+    stubLLM(
+      '{"action":"reframe","type":"harm","mission":"Reframed","principles":"not an array","explanation":"x"}'
+    )
     const result = await moderateContribution('original', ['original principle'])
     // parsePrinciples falls back to original when value is not an array
     expect(result.principles).toEqual(['original principle'])
