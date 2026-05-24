@@ -13,6 +13,7 @@ const BASE_ARGS = { userId: 'user-uuid-1', fingerprint: 'fp-abc123' }
  *   contributions: .select('*', { count, head }).gt(...) → { count }
  *   contributions: .select('country_code').gt(...).not(...) → { data }
  *   contributions: .select('principles').gt(...) → { data }
+ *   contributions: .select('mission').eq('visitor_id', ...).order(...).limit(1).maybeSingle()
  */
 function buildSupabase({
   existingById = null as Record<string, unknown> | null,
@@ -20,6 +21,7 @@ function buildSupabase({
   newVoices = 0,
   countries = [] as string[],
   principleRows = [] as Array<{ principles: string[] }>,
+  lastMission = null as string | null,
 } = {}) {
   const inserted: unknown[] = []
   const updated: unknown[] = []
@@ -36,6 +38,19 @@ function buildSupabase({
               if (table === 'visitors') {
                 const row = col === 'id' ? existingById : existingByFingerprint
                 return { maybeSingle: () => Promise.resolve({ data: row }) }
+              }
+              // contributions.getLastMission: .eq('visitor_id').order().limit().maybeSingle()
+              if (table === 'contributions' && col === 'visitor_id') {
+                return {
+                  order: (_c: unknown, _o?: unknown) => ({
+                    limit: (_n: number) => ({
+                      maybeSingle: () =>
+                        Promise.resolve({
+                          data: lastMission ? { mission: lastMission } : null,
+                        }),
+                    }),
+                  }),
+                }
               }
               return { maybeSingle: () => Promise.resolve({ data: null }) }
             },
@@ -132,6 +147,24 @@ describe('upsertVisitor — return visit (UUID match)', () => {
     await upsertVisitor(supabase, BASE_ARGS)
     expect(supabase._updated).toHaveLength(1)
     expect(supabase._updated[0] as Record<string, unknown>).toHaveProperty('last_seen_at')
+  })
+
+  it('returns lastMission from most recent contribution', async () => {
+    const supabase = buildSupabase({
+      existingById: { last_seen_at: '2024-01-01T00:00:00Z', visit_count: 2 },
+      lastMission: 'To build things that matter.',
+    })
+    const result = await upsertVisitor(supabase, BASE_ARGS)
+    expect(result.lastMission).toBe('To build things that matter.')
+  })
+
+  it('returns null lastMission when visitor has no prior contributions', async () => {
+    const supabase = buildSupabase({
+      existingById: { last_seen_at: '2024-01-01T00:00:00Z', visit_count: 1 },
+      lastMission: null,
+    })
+    const result = await upsertVisitor(supabase, BASE_ARGS)
+    expect(result.lastMission).toBeNull()
   })
 })
 
