@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 import type { VisionItem } from '@/lib/services/earth'
+import { COASTLINES } from '@/lib/coastlines'
 
 const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
 // Seed lights use biased palettes so the mode toggle is visually distinct
@@ -310,22 +311,16 @@ export default function EarthCanvas({
       ctx.arc(cx, cy, R * 0.99, 0, Math.PI * 2)
       ctx.clip()
 
-      // Faint geographic grid — latitude + longitude guides
-      ctx.lineWidth = 0.4
-      ctx.strokeStyle = 'rgba(80,130,210,0.1)'
-      // Latitude circles: 60°N, 30°N, equator, 30°S, 60°S
-      for (const ph2 of [
-        Math.PI / 6,
-        Math.PI / 3,
-        Math.PI / 2,
-        (2 * Math.PI) / 3,
-        (5 * Math.PI) / 6,
-      ]) {
+      // Faint geographic grid — equator + prime meridian as reference lines
+      ctx.lineWidth = 0.35
+      ctx.strokeStyle = 'rgba(80,130,210,0.08)'
+      // Equator (ph2 = π/2) and two latitude bands
+      for (const ph2 of [Math.PI / 3, Math.PI / 2, (2 * Math.PI) / 3]) {
         ctx.beginPath()
         let gStarted = false
         for (let i = 0; i <= 120; i++) {
           const rt = (i / 120) * Math.PI * 2 + s.earthRot
-          if (Math.sin(ph2) * Math.sin(rt) < 0) {
+          if (Math.sin(ph2) * Math.sin(rt) < -0.05) {
             gStarted = false
             continue
           }
@@ -340,25 +335,53 @@ export default function EarthCanvas({
         }
         ctx.stroke()
       }
-      // Longitude lines: 8 evenly spaced meridians
-      for (let j = 0; j < 8; j++) {
-        const lon = (j / 8) * Math.PI * 2
+      // 4 longitude meridians
+      for (let j = 0; j < 4; j++) {
+        const lon = (j / 4) * Math.PI * 2
         ctx.beginPath()
         let gStarted = false
         for (let i = 0; i <= 80; i++) {
-          const ph2 = (i / 80) * Math.PI
+          const gph2 = (i / 80) * Math.PI
           const rt = lon + s.earthRot
-          if (Math.sin(ph2) * Math.sin(rt) < 0) {
+          if (Math.sin(gph2) * Math.sin(rt) < -0.05) {
             gStarted = false
             continue
           }
-          const px = cx + R * Math.sin(ph2) * Math.cos(rt)
-          const py = cy + R * Math.cos(ph2)
+          const px = cx + R * Math.sin(gph2) * Math.cos(rt)
+          const py = cy + R * Math.cos(gph2)
           if (!gStarted) {
             ctx.moveTo(px, py)
             gStarted = true
           } else {
             ctx.lineTo(px, py)
+          }
+        }
+        ctx.stroke()
+      }
+
+      // Continent coastlines (Natural Earth 110m)
+      ctx.lineWidth = 0.8
+      ctx.strokeStyle = 'rgba(140,190,255,0.28)'
+      for (const seg of COASTLINES) {
+        ctx.beginPath()
+        let csStarted = false
+        for (const [lat, lng] of seg) {
+          const cth = (lng * Math.PI) / 180
+          const cph2 = ((90 - lat) * Math.PI) / 180
+          const crt = cth + s.earthRot
+          const csp = Math.sin(cph2)
+          const cpx = cx + R * csp * Math.cos(crt)
+          const cpy = cy + R * Math.cos(cph2)
+          const cdepth = csp * Math.sin(crt)
+          if (cdepth < -0.05) {
+            csStarted = false
+            continue
+          }
+          if (!csStarted) {
+            ctx.moveTo(cpx, cpy)
+            csStarted = true
+          } else {
+            ctx.lineTo(cpx, cpy)
           }
         }
         ctx.stroke()
@@ -390,7 +413,8 @@ export default function EarthCanvas({
         ctx.fill()
       }
 
-      // Vision lights — brighter, interactive (hit-testable)
+      // Vision lights — larger, pulsing, interactive (hit-testable)
+      const visionPulse = s.reducedMotion ? 1 : 0.78 + 0.22 * Math.sin(s.glowT * 1.3)
       for (const vl of s.visionLights) {
         const rt = vl.th + s.earthRot
         const sp = Math.sin(vl.ph2)
@@ -402,15 +426,22 @@ export default function EarthCanvas({
         vl.projVisible = depth >= -0.08
         if (!vl.projVisible) continue
         const vis = (depth + 0.08) / 1.08
-        const rad = 5 * (0.6 + 0.4 * vis)
-        const alpha = 0.92 * vis
-        const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 4)
-        gr.addColorStop(0, `hsla(${vl.missionHue},90%,92%,${alpha})`)
-        gr.addColorStop(0.3, `hsla(${vl.missionHue},75%,72%,${alpha * 0.55})`)
+        const rad = 8 * (0.65 + 0.35 * vis) * visionPulse
+        const alpha = Math.min(0.95, 0.78 * vis + 0.15) * visionPulse
+        // Outer soft halo
+        const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 5)
+        gr.addColorStop(0, `hsla(${vl.missionHue},95%,96%,${alpha})`)
+        gr.addColorStop(0.25, `hsla(${vl.missionHue},85%,78%,${alpha * 0.7})`)
+        gr.addColorStop(0.6, `hsla(${vl.missionHue},70%,60%,${alpha * 0.25})`)
         gr.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.beginPath()
-        ctx.arc(px, py, rad * 4, 0, Math.PI * 2)
+        ctx.arc(px, py, rad * 5, 0, Math.PI * 2)
         ctx.fillStyle = gr
+        ctx.fill()
+        // White-hot core dot
+        ctx.beginPath()
+        ctx.arc(px, py, rad * 0.55, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`
         ctx.fill()
       }
 
@@ -516,9 +547,9 @@ export default function EarthCanvas({
     const cx = e.clientX,
       cy = e.clientY
 
-    // Hit-test vision lights first (24px tap radius)
+    // Hit-test vision lights (44px tap radius — generous for mobile)
     let closest: VisionLight | null = null
-    let minDist = 24
+    let minDist = 44
     for (const vl of s.visionLights) {
       if (!vl.projVisible) continue
       const dx = vl.projX - cx,
@@ -557,7 +588,7 @@ export default function EarthCanvas({
       if (!vl.projVisible) continue
       const dx = vl.projX - mx,
         dy = vl.projY - my
-      if (Math.sqrt(dx * dx + dy * dy) < 24) {
+      if (Math.sqrt(dx * dx + dy * dy) < 44) {
         e.currentTarget.style.cursor = 'pointer'
         return
       }

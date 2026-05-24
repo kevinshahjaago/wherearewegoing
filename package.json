@@ -38,7 +38,9 @@
     "jest": "^30.4.2",
     "jest-environment-node": "^30.4.1",
     "prettier": "^3.8.3",
+    "topojson-client": "^3.1.0",
     "ts-jest": "^29.4.11",
-    "typescript": "^5"
+    "typescript": "^5",
+    "world-atlas": "^2.0.2"
   }
 }

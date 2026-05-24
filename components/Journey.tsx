@@ -254,7 +254,8 @@ export default function Journey({
         setPrincipleCount(fetched.principleCount ?? 0)
         setContributorCount(fetched.contributorCount ?? 0)
       }
-      earthRef.current?.loadVisionLights(real)
+      // Use the full padded list so there are always lights to click (fallbacks fill in when DB is sparse)
+      earthRef.current?.loadVisionLights(visions)
       setCycleVoiceIdx(0)
       setExploreOpen(false)
       setTimeout(() => setCycleVoiceVisible(true), 1200)
