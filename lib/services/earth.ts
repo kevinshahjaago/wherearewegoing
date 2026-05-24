@@ -7,6 +7,7 @@ export type VisionItem = {
   valuesHue: number
   countryCode: string | null
   principles: string[]
+  commitment?: string
   geolocation?: { lat: number; lng: number }
 }
 
@@ -47,7 +48,7 @@ export async function getRecentVisions(
 ): Promise<VisionItem[]> {
   const { data } = await supabase
     .from('contributions')
-    .select('mission, hue, principles, country_code, geolocation')
+    .select('mission, hue, principles, commitment, country_code, geolocation')
     .order('created_at', { ascending: false })
     .limit(limit * 5)
 
@@ -59,6 +60,7 @@ export async function getRecentVisions(
       valuesHue: deriveValuesHue((r.principles as string[]) ?? []),
       countryCode: (r.country_code as string | null) ?? null,
       principles: (r.principles as string[]) ?? [],
+      ...(r.commitment ? { commitment: r.commitment as string } : {}),
       ...(geo?.lat != null && geo?.lng != null
         ? { geolocation: { lat: geo.lat, lng: geo.lng } }
         : {}),

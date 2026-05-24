@@ -662,11 +662,29 @@
   opacity: 0.75;
 }
 
+.exploreLabel {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.45rem;
+  letter-spacing: 0.14em;
+  color: rgba(237, 232, 218, 0.35);
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
 .exploreMission {
   font-family: var(--font-cormorant), serif;
   font-style: italic;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
   color: rgba(237, 232, 218, 0.92);
+  line-height: 1.45;
+}
+
+.exploreCommitment {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(0.8rem, 1.8vw, 0.92rem);
+  color: rgba(201, 168, 76, 0.78);
   line-height: 1.45;
 }
 
@@ -755,6 +773,15 @@
   pointer-events: auto;
 }
 
+.visionCardLabel {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.48rem;
+  letter-spacing: 0.16em;
+  color: rgba(237, 232, 218, 0.35);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
 .visionCardMission {
   font-family: var(--font-cormorant), serif;
   font-style: italic;
@@ -780,6 +807,15 @@
   color: rgba(122, 156, 126, 0.95);
   border: 1px solid rgba(122, 156, 126, 0.45);
   padding: 0.22rem 0.6rem;
+}
+
+.visionCardCommitment {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  color: rgba(201, 168, 76, 0.88);
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
 }
 
 .visionCardCountry {

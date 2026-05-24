@@ -979,15 +979,25 @@ export default function Journey({
                 aria-hidden="true"
               />
               <div>
+                <p className={styles.exploreLabel}>Vision</p>
                 <p className={styles.exploreMission}>&ldquo;{v.mission}&rdquo;</p>
                 {v.principles.length > 0 && (
-                  <div className={styles.explorePrinciples}>
-                    {v.principles.slice(0, 3).map((p) => (
-                      <span key={p} className={styles.explorePrinciple}>
-                        {p}
-                      </span>
-                    ))}
-                  </div>
+                  <>
+                    <p className={styles.exploreLabel}>Principles</p>
+                    <div className={styles.explorePrinciples}>
+                      {v.principles.slice(0, 3).map((p) => (
+                        <span key={p} className={styles.explorePrinciple}>
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {v.commitment && (
+                  <>
+                    <p className={styles.exploreLabel}>Action</p>
+                    <p className={styles.exploreCommitment}>{v.commitment}</p>
+                  </>
                 )}
                 {v.countryCode && <p className={styles.exploreCountry}>{v.countryCode}</p>}
               </div>
@@ -1179,15 +1189,25 @@ export default function Journey({
       >
         {selectedVision && (
           <>
+            <p className={styles.visionCardLabel}>Vision</p>
             <p className={styles.visionCardMission}>&ldquo;{selectedVision.mission}&rdquo;</p>
             {selectedVision.principles.length > 0 && (
-              <div className={styles.visionCardPrinciples}>
-                {selectedVision.principles.map((p) => (
-                  <span key={p} className={styles.visionCardPrinciple}>
-                    {p}
-                  </span>
-                ))}
-              </div>
+              <>
+                <p className={styles.visionCardLabel}>Principles</p>
+                <div className={styles.visionCardPrinciples}>
+                  {selectedVision.principles.map((p) => (
+                    <span key={p} className={styles.visionCardPrinciple}>
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+            {selectedVision.commitment && (
+              <>
+                <p className={styles.visionCardLabel}>Action</p>
+                <p className={styles.visionCardCommitment}>{selectedVision.commitment}</p>
+              </>
             )}
             {selectedVision.countryCode && (
               <p className={styles.visionCardCountry}>{selectedVision.countryCode}</p>
