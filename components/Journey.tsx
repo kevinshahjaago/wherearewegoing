@@ -270,8 +270,10 @@ export default function Journey({
     if (contributeResult?.reframe) {
       setReframeNotice(contributeResult.reframe)
     }
-    // Re-fetch voices fresh so the just-submitted vision is included
-    const freshVoices = await fetch('/api/voices')
+    // Re-fetch voices fresh so the just-submitted vision is included.
+    // Cache-bust with a timestamp so the CDN doesn't serve a stale response
+    // that was populated before the contribution was saved.
+    const freshVoices = await fetch(`/api/voices?_=${Date.now()}`)
       .then(
         (r) =>
           r.json() as Promise<{
@@ -364,7 +366,7 @@ export default function Journey({
     setInputVisible(false)
     setReturnInputOpen(false)
     earthRef.current?.addLights(3)
-    const freshVoices = await fetch('/api/voices')
+    const freshVoices = await fetch(`/api/voices?_=${Date.now()}`)
       .then(
         (r) =>
           r.json() as Promise<{
@@ -426,7 +428,7 @@ export default function Journey({
       }).catch(() => null)
     }
 
-    const freshVoices = await fetch('/api/voices')
+    const freshVoices = await fetch(`/api/voices?_=${Date.now()}`)
       .then(
         (r) =>
           r.json() as Promise<{
