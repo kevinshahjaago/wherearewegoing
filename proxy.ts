@@ -15,6 +15,10 @@ const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
     max: parseInt(process.env.RATE_LIMIT_FP_RPM ?? '10'),
     windowMs: 60_000,
   },
+  '/api/voices': {
+    max: parseInt(process.env.RATE_LIMIT_VOICES_RPM ?? '30'),
+    windowMs: 60_000,
+  },
 }
 
 const windows = new Map<string, number[]>()

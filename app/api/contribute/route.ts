@@ -35,8 +35,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Per-visitor daily cap — prevents one person from flooding the earth
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { count: recentCount } = await supabase
+    .from('contributions')
+    .select('*', { count: 'exact', head: true })
+    .eq('visitor_id', user.id)
+    .gte('created_at', oneDayAgo)
+  const dailyMax = parseInt(process.env.MAX_DAILY_CONTRIBUTIONS ?? '3')
+  if ((recentCount ?? 0) >= dailyMax) {
+    log.warn({ userId: user.id }, 'Daily contribution cap reached')
+    return NextResponse.json({ error: 'Daily contribution limit reached.' }, { status: 429 })
+  }
+
   // Run content moderation pipeline before persisting
   const moderation = await moderateContribution(parsed.data.mission, parsed.data.principles)
+
+  // For guard events: respond as success without persisting — harmful content never reaches the DB.
+  // Never reveal to the client that a guard action occurred.
+  if (moderation.action === 'guard') {
+    log.info({ userId: user.id }, 'Guard action — contribution not persisted')
+    return NextResponse.json({ success: true, hue: Math.round(Math.random() * 360) })
+  }
 
   try {
     const { hue } = await saveContribution(supabase, {
@@ -56,12 +76,6 @@ export async function POST(request: Request) {
       },
       request
     )
-
-    // For guard events: respond as success — the heart emoji is the visible result.
-    // Never reveal to the client that a guard action occurred.
-    if (moderation.action === 'guard') {
-      return NextResponse.json({ success: true, hue })
-    }
 
     // For reframe events: include the reframe info so the client can show transparency notice.
     if (moderation.action === 'reframe' && moderation.reframe) {

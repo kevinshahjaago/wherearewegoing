@@ -78,27 +78,16 @@ export async function getTotalContributions(supabase: SupabaseClient): Promise<n
 }
 
 export async function getCountryCount(supabase: SupabaseClient): Promise<number> {
-  const { data } = await supabase
-    .from('contributions')
-    .select('country_code')
-    .not('country_code', 'is', null)
-  const unique = new Set((data ?? []).map((r) => r.country_code as string))
-  return unique.size
+  const { data } = await supabase.rpc('count_distinct_countries')
+  return (data as number) ?? 0
 }
 
 export async function getPrincipleCount(supabase: SupabaseClient): Promise<number> {
-  const { data } = await supabase.from('contributions').select('principles')
-  return (data ?? []).reduce(
-    (sum, row) => sum + ((row.principles as string[] | null)?.length ?? 0),
-    0
-  )
+  const { data } = await supabase.rpc('count_total_principles')
+  return (data as number) ?? 0
 }
 
 export async function getUniqueContributorCount(supabase: SupabaseClient): Promise<number> {
-  const { data } = await supabase
-    .from('contributions')
-    .select('visitor_id')
-    .not('visitor_id', 'is', null)
-  const unique = new Set((data ?? []).map((r) => r.visitor_id as string))
-  return unique.size
+  const { data } = await supabase.rpc('count_unique_contributors')
+  return (data as number) ?? 0
 }
