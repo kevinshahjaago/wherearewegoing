@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requestLogger } from '@/lib/logger'
-import { getRecentVisions, getTotalContributions, getCountryCount } from '@/lib/services/earth'
+import {
+  getRecentVisions,
+  getTotalContributions,
+  getCountryCount,
+  getPrincipleCount,
+} from '@/lib/services/earth'
 import { randomUUID } from 'crypto'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
 
@@ -11,14 +16,15 @@ export async function GET() {
 
   try {
     const supabase = await createClient()
-    const [visions, total, countryCount] = await Promise.all([
+    const [visions, total, countryCount, principleCount] = await Promise.all([
       getRecentVisions(supabase),
       getTotalContributions(supabase),
       getCountryCount(supabase),
+      getPrincipleCount(supabase),
     ])
-    log.info({ count: visions.length, total, countryCount }, 'Visions fetched')
+    log.info({ count: visions.length, total, countryCount, principleCount }, 'Visions fetched')
     return NextResponse.json(
-      { visions, totalContributions: total, countryCount },
+      { visions, totalContributions: total, countryCount, principleCount },
       {
         headers: {
           'Cache-Control': `public, s-maxage=${EXPERIENCE_CONFIG.voices.cacheSeconds}, stale-while-revalidate=60`,

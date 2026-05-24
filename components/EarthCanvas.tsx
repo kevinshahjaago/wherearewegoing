@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
+import type { VisionItem } from '@/lib/services/earth'
 
 const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
 // Seed lights use biased palettes so the mode toggle is visually distinct
@@ -18,6 +19,7 @@ export type EarthCanvasHandle = {
   ) => void
   flash: () => void
   setMode: (mode: EarthMode) => void
+  loadVisionLights: (visions: VisionItem[]) => void
   pulseUserLight: (
     geo?: { lat: number; lng: number },
     missionHue?: number,
@@ -46,6 +48,15 @@ type UserLight = {
   phase: number
   elapsed: number
 }
+type VisionLight = {
+  th: number
+  ph2: number
+  missionHue: number
+  vision: VisionItem
+  projX: number
+  projY: number
+  projVisible: boolean
+}
 type AnimState = {
   W: number
   H: number
@@ -54,6 +65,7 @@ type AnimState = {
   cy: number
   stars: Star[]
   lights: Light[]
+  visionLights: VisionLight[]
   userLight: UserLight | null
   earthFill: number
   earthRot: number
@@ -67,10 +79,12 @@ export default function EarthCanvas({
   ref,
   earthFill: initialFill = 0.36,
   contributionCount = 0,
+  onLightClick,
 }: {
   ref?: Ref<EarthCanvasHandle>
   earthFill?: number
   contributionCount?: number
+  onLightClick?: (vision: VisionItem | null) => void
 }) {
   const starsRef = useRef<HTMLCanvasElement>(null)
   const earthRef = useRef<HTMLCanvasElement>(null)
@@ -83,6 +97,7 @@ export default function EarthCanvas({
     cy: 0,
     stars: [],
     lights: [],
+    visionLights: [],
     userLight: null,
     earthFill: initialFill,
     earthRot: 0,
@@ -132,6 +147,18 @@ export default function EarthCanvas({
     },
     setMode(mode: EarthMode) {
       anim.current.mode = mode
+    },
+    loadVisionLights(visions: VisionItem[]) {
+      const s = anim.current
+      s.visionLights = visions.map((v) => ({
+        th: Math.random() * Math.PI * 2,
+        ph2: Math.acos(2 * Math.random() - 1),
+        missionHue: v.missionHue,
+        vision: v,
+        projX: 0,
+        projY: 0,
+        projVisible: false,
+      }))
     },
     pulseUserLight(geo?: { lat: number; lng: number }, missionHue?: number, valuesHue?: number) {
       const s = anim.current
@@ -308,6 +335,30 @@ export default function EarthCanvas({
         ctx.fill()
       }
 
+      // Vision lights — brighter, interactive (hit-testable)
+      for (const vl of s.visionLights) {
+        const rt = vl.th + s.earthRot
+        const sp = Math.sin(vl.ph2)
+        const px = cx + R * sp * Math.cos(rt)
+        const py = cy + R * Math.cos(vl.ph2)
+        const depth = sp * Math.sin(rt)
+        vl.projX = px
+        vl.projY = py
+        vl.projVisible = depth >= -0.08
+        if (!vl.projVisible) continue
+        const vis = (depth + 0.08) / 1.08
+        const rad = 5 * (0.6 + 0.4 * vis)
+        const alpha = 0.92 * vis
+        const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 4)
+        gr.addColorStop(0, `hsla(${vl.missionHue},90%,92%,${alpha})`)
+        gr.addColorStop(0.3, `hsla(${vl.missionHue},75%,72%,${alpha * 0.55})`)
+        gr.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.beginPath()
+        ctx.arc(px, py, rad * 4, 0, Math.PI * 2)
+        ctx.fillStyle = gr
+        ctx.fill()
+      }
+
       // User's own light — pulsing highlight for ~8s after submit
       if (s.userLight) {
         const ul = s.userLight
@@ -407,8 +458,31 @@ export default function EarthCanvas({
 
   function handleClick(e: React.MouseEvent) {
     const s = anim.current
-    const dx = e.clientX - s.cx,
-      dy = e.clientY - s.cy
+    const cx = e.clientX,
+      cy = e.clientY
+
+    // Hit-test vision lights first (24px tap radius)
+    let closest: VisionLight | null = null
+    let minDist = 24
+    for (const vl of s.visionLights) {
+      if (!vl.projVisible) continue
+      const dx = vl.projX - cx,
+        dy = vl.projY - cy
+      const d = Math.sqrt(dx * dx + dy * dy)
+      if (d < minDist) {
+        minDist = d
+        closest = vl
+      }
+    }
+    if (closest) {
+      onLightClick?.(closest.vision)
+      return
+    }
+
+    // Background click — dismiss any selected vision, then flash
+    onLightClick?.(null)
+    const dx = cx - s.cx,
+      dy = cy - s.cy
     if (Math.sqrt(dx * dx + dy * dy) < s.eR * 1.15) {
       const el = flashEl.current
       if (!el) return
@@ -417,6 +491,23 @@ export default function EarthCanvas({
         el.style.opacity = '0'
       }, 350)
     }
+  }
+
+  function handleMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (!onLightClick) return
+    const s = anim.current
+    const mx = e.clientX,
+      my = e.clientY
+    for (const vl of s.visionLights) {
+      if (!vl.projVisible) continue
+      const dx = vl.projX - mx,
+        dy = vl.projY - my
+      if (Math.sqrt(dx * dx + dy * dy) < 24) {
+        e.currentTarget.style.cursor = 'pointer'
+        return
+      }
+    }
+    e.currentTarget.style.cursor = 'default'
   }
 
   const label = `Earth visualization with ${contributionCount.toLocaleString()} contribution${contributionCount !== 1 ? 's' : ''}`
@@ -434,6 +525,7 @@ export default function EarthCanvas({
         aria-label={label}
         aria-describedby="earth-desc"
         onClick={handleClick}
+        onMouseMove={handleMouseMove}
         style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
       />
       <p id="earth-desc" className="sr-only">

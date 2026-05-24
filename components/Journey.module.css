@@ -549,6 +549,76 @@
   transition: opacity 0.2s ease;
 }
 
+/* ── Vision card (appears when a light is clicked) ── */
+.visionCard {
+  position: fixed;
+  bottom: max(2.5rem, calc(env(safe-area-inset-bottom, 0px) + 2rem));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  text-align: center;
+  width: min(440px, 88vw);
+  padding: 1.4rem 2rem 1.2rem;
+  background: rgba(6, 6, 14, 0.76);
+  border: 1px solid rgba(237, 232, 218, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.visionCardVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.visionCardMission {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-weight: 300;
+  color: var(--gold);
+  line-height: 1.42;
+  margin-bottom: 0.8rem;
+}
+
+.visionCardPrinciples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.visionCardPrinciple {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  color: rgba(122, 156, 126, 0.72);
+  border: 1px solid rgba(122, 156, 126, 0.28);
+  padding: 0.12rem 0.45rem;
+}
+
+.visionCardCountry {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  color: rgba(237, 232, 218, 0.3);
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.visionCardDismiss {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  color: rgba(237, 232, 218, 0.22);
+  text-transform: uppercase;
+  margin-top: 0.6rem;
+}
+
 /* ── Return secondary action (add light / skip) ── */
 .returnAction {
   background: none;

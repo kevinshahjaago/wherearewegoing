@@ -78,3 +78,11 @@ export async function getCountryCount(supabase: SupabaseClient): Promise<number>
   const unique = new Set((data ?? []).map((r) => r.country_code as string))
   return unique.size
 }
+
+export async function getPrincipleCount(supabase: SupabaseClient): Promise<number> {
+  const { data } = await supabase.from('contributions').select('principles')
+  return (data ?? []).reduce(
+    (sum, row) => sum + ((row.principles as string[] | null)?.length ?? 0),
+    0
+  )
+}

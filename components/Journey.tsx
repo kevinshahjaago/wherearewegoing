@@ -154,6 +154,8 @@ export default function Journey({
   const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
   const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
   const [countryCount, setCountryCount] = useState(0)
+  const [principleCount, setPrincipleCount] = useState(0)
+  const [selectedVision, setSelectedVision] = useState<VisionItem | null>(null)
   const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
@@ -217,7 +219,13 @@ export default function Journey({
 
   // Declared before goContribute which calls it
   const goReveal = useCallback(
-    (fetched: { visions: VisionItem[]; countryCount: number } | null = null) => {
+    (
+      fetched: {
+        visions: VisionItem[]
+        countryCount: number
+        principleCount: number
+      } | null = null
+    ) => {
       // Real visions shown in the explore list (no fallbacks — count must match stats bar)
       const real = fetched?.visions ?? []
       setRealVisions(real)
@@ -238,7 +246,12 @@ export default function Journey({
       transitionQuestion(null)
 
       setDisplayVisions(visions)
-      if (fetched) setCountryCount(fetched.countryCount)
+      setSelectedVision(null)
+      if (fetched) {
+        setCountryCount(fetched.countryCount)
+        setPrincipleCount(fetched.principleCount ?? 0)
+      }
+      earthRef.current?.loadVisionLights(real)
       setCycleVoiceIdx(0)
       setExploreOpen(false)
       setTimeout(() => setCycleVoiceVisible(true), 1200)
@@ -264,8 +277,19 @@ export default function Journey({
 
     const animDone = new Promise<void>((resolve) => setTimeout(resolve, 2600))
     const voicesFetch = fetch('/api/voices')
-      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
-      .then((d) => ({ visions: d.visions ?? [], countryCount: d.countryCount ?? 0 }))
+      .then(
+        (r) =>
+          r.json() as Promise<{
+            visions: VisionItem[]
+            countryCount: number
+            principleCount: number
+          }>
+      )
+      .then((d) => ({
+        visions: d.visions ?? [],
+        countryCount: d.countryCount ?? 0,
+        principleCount: d.principleCount ?? 0,
+      }))
       .catch(() => null)
 
     setLocationPromptVisible(true)
@@ -305,7 +329,14 @@ export default function Journey({
     const [, , userHue] = await Promise.all([animDone, voicesFetch, contributeFetch])
     // Re-fetch voices fresh so the just-submitted vision is included
     const freshVoices = await fetch('/api/voices')
-      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .then(
+        (r) =>
+          r.json() as Promise<{
+            visions: VisionItem[]
+            countryCount: number
+            principleCount: number
+          }>
+      )
       .catch(() => null)
     earthRef.current?.pulseUserLight(
       geo ?? undefined,
@@ -376,7 +407,14 @@ export default function Journey({
     setReturnInputOpen(false)
     earthRef.current?.addLights(3)
     const freshVoices = await fetch('/api/voices')
-      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .then(
+        (r) =>
+          r.json() as Promise<{
+            visions: VisionItem[]
+            countryCount: number
+            principleCount: number
+          }>
+      )
       .catch(() => null)
     goReveal(freshVoices ?? null)
   }, [goReveal])
@@ -414,6 +452,7 @@ export default function Journey({
     setLocationPromptVisible(false)
 
     if (mission) {
+      setLiveContributions((n) => n + 1)
       earthRef.current?.pulseUserLight(geo ?? undefined)
       fetch('/api/contribute', {
         method: 'POST',
@@ -429,7 +468,14 @@ export default function Journey({
     }
 
     const freshVoices = await fetch('/api/voices')
-      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .then(
+        (r) =>
+          r.json() as Promise<{
+            visions: VisionItem[]
+            countryCount: number
+            principleCount: number
+          }>
+      )
       .catch(() => null)
     goReveal(freshVoices ?? null)
   }, [goReveal])
@@ -444,6 +490,7 @@ export default function Journey({
     setYourMarkOpacity(0)
     setShareRowVisible(false)
     setReturnInputOpen(false)
+    setSelectedVision(null)
     setShiftsVisible(true)
     transitionQuestion(null)
     showBtn('Explore the earth')
@@ -658,6 +705,7 @@ export default function Journey({
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
+      if (e.key === 'Escape') setSelectedVision(null)
       if ((e.key === 'r' || e.key === 'R') && step >= 5) goReturn()
     }
     document.addEventListener('keydown', handler)
@@ -740,7 +788,12 @@ export default function Journey({
 
   return (
     <>
-      <EarthCanvas ref={earthRef} earthFill={earthFill} contributionCount={liveContributions} />
+      <EarthCanvas
+        ref={earthRef}
+        earthFill={earthFill}
+        contributionCount={liveContributions}
+        onLightClick={setSelectedVision}
+      />
 
       <div
         role="status"
@@ -750,11 +803,26 @@ export default function Journey({
         Share your location so we can add your vision to where you are
       </div>
 
-      <div className={styles.wordmark} aria-label="wherearewegoing.earth">
+      <div
+        className={styles.wordmark}
+        aria-label="wherearewegoing.earth"
+        style={
+          selectedVision
+            ? { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.3s ease' }
+            : { transition: 'opacity 0.3s ease' }
+        }
+      >
         where are we going . earth
       </div>
 
-      <div className={styles.ui}>
+      <div
+        className={styles.ui}
+        style={
+          selectedVision
+            ? { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.3s ease' }
+            : { transition: 'opacity 0.3s ease' }
+        }
+      >
         <div
           ref={questionRef}
           role="status"
@@ -867,6 +935,12 @@ export default function Journey({
         {step === 5 && (
           <div className={styles.statsBar}>
             <span>{liveContributions.toLocaleString()} visions</span>
+            {principleCount > 0 && (
+              <>
+                <span className={styles.statsDot} aria-hidden="true" />
+                <span>{principleCount.toLocaleString()} principles</span>
+              </>
+            )}
             {countryCount > 0 && (
               <>
                 <span className={styles.statsDot} aria-hidden="true" />
@@ -1008,6 +1082,32 @@ export default function Journey({
           >
             {returnInputOpen ? 'Skip — explore the earth' : 'Add today’s light'}
           </button>
+        )}
+      </div>
+      {/* Vision card — shown when a light on the earth is clicked */}
+      <div
+        role="dialog"
+        aria-modal="false"
+        aria-label="Vision from around the world"
+        className={`${styles.visionCard}${selectedVision ? ` ${styles.visionCardVisible}` : ''}`}
+      >
+        {selectedVision && (
+          <>
+            <p className={styles.visionCardMission}>&ldquo;{selectedVision.mission}&rdquo;</p>
+            {selectedVision.principles.length > 0 && (
+              <div className={styles.visionCardPrinciples}>
+                {selectedVision.principles.map((p) => (
+                  <span key={p} className={styles.visionCardPrinciple}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            )}
+            {selectedVision.countryCode && (
+              <p className={styles.visionCardCountry}>{selectedVision.countryCode}</p>
+            )}
+            <p className={styles.visionCardDismiss}>tap the earth to close</p>
+          </>
         )}
       </div>
     </>
