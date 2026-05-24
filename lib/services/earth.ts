@@ -7,6 +7,7 @@ export type VisionItem = {
   valuesHue: number
   countryCode: string | null
   principles: string[]
+  geolocation?: { lat: number; lng: number }
 }
 
 // Deterministic hue from a principle string (for custom or unknown principles).
@@ -46,17 +47,23 @@ export async function getRecentVisions(
 ): Promise<VisionItem[]> {
   const { data } = await supabase
     .from('contributions')
-    .select('mission, hue, principles, country_code')
+    .select('mission, hue, principles, country_code, geolocation')
     .order('created_at', { ascending: false })
     .limit(limit * 5)
 
-  const pool = (data ?? []).map((r) => ({
-    mission: r.mission as string,
-    missionHue: (r.hue as number | null) ?? 45,
-    valuesHue: deriveValuesHue((r.principles as string[]) ?? []),
-    countryCode: (r.country_code as string | null) ?? null,
-    principles: (r.principles as string[]) ?? [],
-  }))
+  const pool = (data ?? []).map((r) => {
+    const geo = r.geolocation as { lat: number; lng: number } | null
+    return {
+      mission: r.mission as string,
+      missionHue: (r.hue as number | null) ?? 45,
+      valuesHue: deriveValuesHue((r.principles as string[]) ?? []),
+      countryCode: (r.country_code as string | null) ?? null,
+      principles: (r.principles as string[]) ?? [],
+      ...(geo?.lat != null && geo?.lng != null
+        ? { geolocation: { lat: geo.lat, lng: geo.lng } }
+        : {}),
+    }
+  })
 
   return pool.sort(() => Math.random() - 0.5).slice(0, limit)
 }

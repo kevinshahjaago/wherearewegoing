@@ -18,9 +18,9 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const SKIP = 2 // keep 1 in every SKIP points — low enough for ~99% coastal fidelity
+const SKIP = 1 // keep every point — full 50m resolution
 const MIN_PTS = 4 // minimum points per segment to keep
-const MAX_SEGMENTS = 300 // include major islands, archipelagos, fjords, etc.
+const MAX_SEGMENTS = 500 // include major islands, archipelagos, fjords, etc.
 
 const topo = JSON.parse(
   readFileSync(resolve(__dirname, '../node_modules/world-atlas/land-50m.json'), 'utf8')

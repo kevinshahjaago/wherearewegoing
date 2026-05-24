@@ -101,7 +101,7 @@ export default function EarthCanvas({
     visionLights: [],
     userLight: null,
     earthFill: initialFill,
-    earthRot: 0,
+    earthRot: Math.PI / 2,
     glowT: 0,
     rafId: 0,
     reducedMotion: false,
@@ -152,15 +152,20 @@ export default function EarthCanvas({
     },
     loadVisionLights(visions: VisionItem[]) {
       const s = anim.current
-      s.visionLights = visions.map((v) => ({
-        th: Math.random() * Math.PI * 2,
-        ph2: Math.acos(2 * Math.random() - 1),
-        missionHue: v.missionHue,
-        vision: v,
-        projX: 0,
-        projY: 0,
-        projVisible: false,
-      }))
+      s.visionLights = visions.map((v) => {
+        const geo = v.geolocation
+        const th = geo ? (geo.lng * Math.PI) / 180 : Math.random() * Math.PI * 2
+        const ph2 = geo ? ((90 - geo.lat) * Math.PI) / 180 : Math.acos(2 * Math.random() - 1)
+        return {
+          th,
+          ph2,
+          missionHue: v.missionHue,
+          vision: v,
+          projX: 0,
+          projY: 0,
+          projVisible: false,
+        }
+      })
     },
     pulseUserLight(geo?: { lat: number; lng: number }, missionHue?: number, valuesHue?: number) {
       const s = anim.current
@@ -530,7 +535,6 @@ export default function EarthCanvas({
 
     resize()
     initStars()
-    seedLights()
     loop()
     window.addEventListener('resize', resize)
     // Lazy-load coastline data after initial render (separate chunk, non-blocking)
