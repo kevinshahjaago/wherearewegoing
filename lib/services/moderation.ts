@@ -99,6 +99,10 @@ export async function moderateContribution(
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 8000)
 
+    // Hard-cap inputs before they reach the LLM — defense-in-depth beyond Zod validation
+    const safeMission = mission.slice(0, 300)
+    const safePrinciples = principles.slice(0, 5).map((p) => p.slice(0, 100))
+
     const message = await client.messages.create(
       {
         model: 'claude-haiku-4-5-20251001',
@@ -107,7 +111,7 @@ export async function moderateContribution(
         messages: [
           {
             role: 'user',
-            content: `Mission: "${mission}"\nPrinciples: ${JSON.stringify(principles)}`,
+            content: `Mission: "${safeMission}"\nPrinciples: ${JSON.stringify(safePrinciples)}`,
           },
         ],
       },

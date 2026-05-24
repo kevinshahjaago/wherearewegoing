@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { FirstPrinciplesRequestSchema } from '@/lib/schemas/firstPrinciples'
+import { createClient } from '@/lib/supabase/server'
 import logger from '@/lib/logger'
 
 const client = new Anthropic()
@@ -45,7 +46,18 @@ export async function POST(req: Request) {
     )
   }
 
-  const { mission } = parsed.data
+  // Require a valid anonymous session — prevents unauthenticated LLM calls
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    // Fail open: client falls back to static seeds; no auth error exposed
+    return NextResponse.json({ principles: [] })
+  }
+
+  // Hard-cap input before it reaches the LLM — defense-in-depth beyond Zod validation
+  const mission = parsed.data.mission.slice(0, 300)
 
   if (!process.env.ANTHROPIC_API_KEY) {
     log.warn('ANTHROPIC_API_KEY not set — returning empty principles')
