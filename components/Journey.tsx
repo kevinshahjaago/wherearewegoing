@@ -456,6 +456,12 @@ export default function Journey({
   useEffect(() => {
     let cancelled = false
 
+    // Fallback fires after 3 s if the API hasn't responded yet.
+    // Declared before initSession so the closure can clearTimeout it on success.
+    const fallback = setTimeout(() => {
+      if (!cancelled) setVisitType('first')
+    }, 3000)
+
     async function initSession() {
       try {
         const supabase = createClient()
@@ -480,6 +486,7 @@ export default function Journey({
         if (res.ok) {
           const data = (await res.json()) as { isReturn: boolean; delta: Delta | null }
           if (!cancelled) {
+            clearTimeout(fallback) // API answered — cancel so it can't overwrite visitType
             setDelta(data.delta)
             setVisitType(data.isReturn ? 'return' : 'first')
           }
@@ -488,13 +495,11 @@ export default function Journey({
       } catch {
         /* Supabase not configured or network error — fall through to first-visit */
       }
-      if (!cancelled) setVisitType('first')
+      if (!cancelled) {
+        clearTimeout(fallback)
+        setVisitType('first')
+      }
     }
-
-    // Start the journey after 3 s even if the API hasn't responded
-    const fallback = setTimeout(() => {
-      if (!cancelled) setVisitType('first')
-    }, 3000)
 
     initSession()
     return () => {
