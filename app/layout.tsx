@@ -28,10 +28,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'Where Are We Going?',
-  description: 'A living question answered by everyone who has ever asked it.',
+  description: 'Add your light, and then everyone else\'s.',
   openGraph: {
     title: 'Where Are We Going?',
-    description: 'A living question answered by everyone who has ever asked it.',
+    description: 'Add your light, and then everyone else\'s.',
     url: 'https://wherearewegoing.earth',
     siteName: 'wherearewegoing.earth',
     type: 'website',
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
         url: 'https://wherearewegoing.earth/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Where Are We Going? — A living question answered by everyone who has ever asked it.',
+        alt: "Where Are We Going? — Add your light, and then everyone else's.",
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Where Are We Going?',
-    description: 'A living question answered by everyone who has ever asked it.',
+    description: 'Add your light, and then everyone else\'s.',
     images: ['https://wherearewegoing.earth/og-image.png'],
   },
 }

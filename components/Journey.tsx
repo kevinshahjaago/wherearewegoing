@@ -44,8 +44,18 @@ type Delta = {
 
 const { copy } = EXPERIENCE_CONFIG
 
+// Tracks last-shown index per list so consecutive loads never repeat.
+const lastPickedIdx = new Map<readonly string[], number>()
+
 function randomPlaceholder(list: readonly string[]): string {
-  return list[Math.floor(Math.random() * list.length)]
+  if (list.length === 0) return ''
+  const last = lastPickedIdx.get(list) ?? -1
+  let idx: number
+  do {
+    idx = Math.floor(Math.random() * list.length)
+  } while (idx === last && list.length > 1)
+  lastPickedIdx.set(list, idx)
+  return list[idx]
 }
 
 export default function Journey({
