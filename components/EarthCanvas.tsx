@@ -309,6 +309,61 @@ export default function EarthCanvas({
       ctx.beginPath()
       ctx.arc(cx, cy, R * 0.99, 0, Math.PI * 2)
       ctx.clip()
+
+      // Faint geographic grid — latitude + longitude guides
+      ctx.lineWidth = 0.4
+      ctx.strokeStyle = 'rgba(80,130,210,0.1)'
+      // Latitude circles: 60°N, 30°N, equator, 30°S, 60°S
+      for (const ph2 of [
+        Math.PI / 6,
+        Math.PI / 3,
+        Math.PI / 2,
+        (2 * Math.PI) / 3,
+        (5 * Math.PI) / 6,
+      ]) {
+        ctx.beginPath()
+        let gStarted = false
+        for (let i = 0; i <= 120; i++) {
+          const rt = (i / 120) * Math.PI * 2 + s.earthRot
+          if (Math.sin(ph2) * Math.sin(rt) < 0) {
+            gStarted = false
+            continue
+          }
+          const px = cx + R * Math.sin(ph2) * Math.cos(rt)
+          const py = cy + R * Math.cos(ph2)
+          if (!gStarted) {
+            ctx.moveTo(px, py)
+            gStarted = true
+          } else {
+            ctx.lineTo(px, py)
+          }
+        }
+        ctx.stroke()
+      }
+      // Longitude lines: 8 evenly spaced meridians
+      for (let j = 0; j < 8; j++) {
+        const lon = (j / 8) * Math.PI * 2
+        ctx.beginPath()
+        let gStarted = false
+        for (let i = 0; i <= 80; i++) {
+          const ph2 = (i / 80) * Math.PI
+          const rt = lon + s.earthRot
+          if (Math.sin(ph2) * Math.sin(rt) < 0) {
+            gStarted = false
+            continue
+          }
+          const px = cx + R * Math.sin(ph2) * Math.cos(rt)
+          const py = cy + R * Math.cos(ph2)
+          if (!gStarted) {
+            ctx.moveTo(px, py)
+            gStarted = true
+          } else {
+            ctx.lineTo(px, py)
+          }
+        }
+        ctx.stroke()
+      }
+
       for (const l of s.lights) {
         if (!s.reducedMotion) l.p += l.sp
         if (l.grow) {

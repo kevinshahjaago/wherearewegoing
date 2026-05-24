@@ -18,6 +18,32 @@
     clamp(2.5rem, 7dvh, 4.5rem),
     calc(env(safe-area-inset-bottom, 0px) + var(--keyboard-offset, 0px) + 1.5rem)
   );
+  /* Pass clicks through to the canvas; interactive children restore this below */
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Fade out + block all interaction when a vision card is open */
+.uiHidden {
+  opacity: 0;
+}
+.uiHidden * {
+  pointer-events: none !important;
+}
+
+/* ── Restore pointer-events on all interactive ui children ── */
+.answer,
+.seed,
+.pill,
+.btn,
+.shareRow,
+.shareBtn,
+.seeds,
+.suggests,
+.exploreToggle,
+.exploreList,
+.returnAction {
+  pointer-events: auto;
 }
 
 /* ── Wordmark ── */
@@ -32,6 +58,12 @@
   letter-spacing: 0.28em;
   color: rgba(237, 232, 218, 0.82);
   text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.wordmarkHidden {
+  opacity: 0;
 }
 
 /* ── Question ── */

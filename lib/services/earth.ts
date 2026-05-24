@@ -86,3 +86,12 @@ export async function getPrincipleCount(supabase: SupabaseClient): Promise<numbe
     0
   )
 }
+
+export async function getUniqueContributorCount(supabase: SupabaseClient): Promise<number> {
+  const { data } = await supabase
+    .from('contributions')
+    .select('visitor_id')
+    .not('visitor_id', 'is', null)
+  const unique = new Set((data ?? []).map((r) => r.visitor_id as string))
+  return unique.size
+}

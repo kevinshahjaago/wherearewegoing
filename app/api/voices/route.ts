@@ -6,6 +6,7 @@ import {
   getTotalContributions,
   getCountryCount,
   getPrincipleCount,
+  getUniqueContributorCount,
 } from '@/lib/services/earth'
 import { randomUUID } from 'crypto'
 import { EXPERIENCE_CONFIG } from '@/config/experience'
@@ -16,15 +17,19 @@ export async function GET() {
 
   try {
     const supabase = await createClient()
-    const [visions, total, countryCount, principleCount] = await Promise.all([
+    const [visions, total, countryCount, principleCount, contributorCount] = await Promise.all([
       getRecentVisions(supabase),
       getTotalContributions(supabase),
       getCountryCount(supabase),
       getPrincipleCount(supabase),
+      getUniqueContributorCount(supabase),
     ])
-    log.info({ count: visions.length, total, countryCount, principleCount }, 'Visions fetched')
+    log.info(
+      { count: visions.length, total, countryCount, principleCount, contributorCount },
+      'Visions fetched'
+    )
     return NextResponse.json(
-      { visions, totalContributions: total, countryCount, principleCount },
+      { visions, totalContributions: total, countryCount, principleCount, contributorCount },
       {
         headers: {
           'Cache-Control': `public, s-maxage=${EXPERIENCE_CONFIG.voices.cacheSeconds}, stale-while-revalidate=60`,

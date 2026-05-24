@@ -155,6 +155,7 @@ export default function Journey({
   const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
   const [countryCount, setCountryCount] = useState(0)
   const [principleCount, setPrincipleCount] = useState(0)
+  const [contributorCount, setContributorCount] = useState(0)
   const [selectedVision, setSelectedVision] = useState<VisionItem | null>(null)
   const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
@@ -224,6 +225,7 @@ export default function Journey({
         visions: VisionItem[]
         countryCount: number
         principleCount: number
+        contributorCount: number
       } | null = null
     ) => {
       // Real visions shown in the explore list (no fallbacks — count must match stats bar)
@@ -250,6 +252,7 @@ export default function Journey({
       if (fetched) {
         setCountryCount(fetched.countryCount)
         setPrincipleCount(fetched.principleCount ?? 0)
+        setContributorCount(fetched.contributorCount ?? 0)
       }
       earthRef.current?.loadVisionLights(real)
       setCycleVoiceIdx(0)
@@ -283,12 +286,14 @@ export default function Journey({
             visions: VisionItem[]
             countryCount: number
             principleCount: number
+            contributorCount: number
           }>
       )
       .then((d) => ({
         visions: d.visions ?? [],
         countryCount: d.countryCount ?? 0,
         principleCount: d.principleCount ?? 0,
+        contributorCount: d.contributorCount ?? 0,
       }))
       .catch(() => null)
 
@@ -335,6 +340,7 @@ export default function Journey({
             visions: VisionItem[]
             countryCount: number
             principleCount: number
+            contributorCount: number
           }>
       )
       .catch(() => null)
@@ -413,6 +419,7 @@ export default function Journey({
             visions: VisionItem[]
             countryCount: number
             principleCount: number
+            contributorCount: number
           }>
       )
       .catch(() => null)
@@ -474,6 +481,7 @@ export default function Journey({
             visions: VisionItem[]
             countryCount: number
             principleCount: number
+            contributorCount: number
           }>
       )
       .catch(() => null)
@@ -804,25 +812,13 @@ export default function Journey({
       </div>
 
       <div
-        className={styles.wordmark}
+        className={`${styles.wordmark}${selectedVision ? ` ${styles.wordmarkHidden}` : ''}`}
         aria-label="wherearewegoing.earth"
-        style={
-          selectedVision
-            ? { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.3s ease' }
-            : { transition: 'opacity 0.3s ease' }
-        }
       >
         where are we going . earth
       </div>
 
-      <div
-        className={styles.ui}
-        style={
-          selectedVision
-            ? { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.3s ease' }
-            : { transition: 'opacity 0.3s ease' }
-        }
-      >
+      <div className={`${styles.ui}${selectedVision ? ` ${styles.uiHidden}` : ''}`}>
         <div
           ref={questionRef}
           role="status"
@@ -935,6 +931,12 @@ export default function Journey({
         {step === 5 && (
           <div className={styles.statsBar}>
             <span>{liveContributions.toLocaleString()} visions</span>
+            {contributorCount > 0 && (
+              <>
+                <span className={styles.statsDot} aria-hidden="true" />
+                <span>{contributorCount.toLocaleString()} people</span>
+              </>
+            )}
             {principleCount > 0 && (
               <>
                 <span className={styles.statsDot} aria-hidden="true" />
