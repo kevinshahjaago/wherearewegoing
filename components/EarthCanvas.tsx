@@ -15,6 +15,11 @@ export type EarthCanvasHandle = {
   ) => void
   flash: () => void
   setMode: (mode: EarthMode) => void
+  pulseUserLight: (
+    geo?: { lat: number; lng: number },
+    missionHue?: number,
+    valuesHue?: number
+  ) => void
 }
 
 type Star = { x: number; y: number; r: number; a: number; ph: number; sp: number }
@@ -30,6 +35,14 @@ type Light = {
   sp: number
   grow: boolean
 }
+type UserLight = {
+  th: number
+  ph2: number
+  missionHue: number
+  valuesHue: number
+  phase: number
+  elapsed: number
+}
 type AnimState = {
   W: number
   H: number
@@ -38,6 +51,7 @@ type AnimState = {
   cy: number
   stars: Star[]
   lights: Light[]
+  userLight: UserLight | null
   earthFill: number
   earthRot: number
   glowT: number
@@ -66,6 +80,7 @@ export default function EarthCanvas({
     cy: 0,
     stars: [],
     lights: [],
+    userLight: null,
     earthFill: initialFill,
     earthRot: 0,
     glowT: 0,
@@ -114,6 +129,14 @@ export default function EarthCanvas({
     },
     setMode(mode: EarthMode) {
       anim.current.mode = mode
+    },
+    pulseUserLight(geo?: { lat: number; lng: number }, missionHue?: number, valuesHue?: number) {
+      const s = anim.current
+      const th = geo ? (geo.lng * Math.PI) / 180 - s.earthRot : Math.random() * Math.PI * 2
+      const ph2 = geo ? ((90 - geo.lat) * Math.PI) / 180 : Math.acos(2 * Math.random() - 1)
+      const mh = missionHue ?? THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)]
+      const vh = valuesHue ?? mh
+      s.userLight = { th, ph2, missionHue: mh, valuesHue: vh, phase: 0, elapsed: 0 }
     },
   }))
 
@@ -269,6 +292,66 @@ export default function EarthCanvas({
         ctx.fillStyle = gr
         ctx.fill()
       }
+
+      // User's own light — pulsing highlight for ~8s after submit
+      if (s.userLight) {
+        const ul = s.userLight
+        ul.elapsed += 1
+        if (!s.reducedMotion) ul.phase += 0.055
+
+        const LIFE = 480 // ~8s at 60fps
+        const FADE = 360 // start fading at ~6s
+        if (ul.elapsed >= LIFE) {
+          s.lights.push({
+            th: ul.th,
+            ph2: ul.ph2,
+            r: 2.5,
+            missionHue: ul.missionHue,
+            valuesHue: ul.valuesHue,
+            a: 0.75,
+            ta: 0.75,
+            p: ul.phase,
+            sp: 0.01,
+            grow: false,
+          })
+          s.userLight = null
+        } else {
+          const fade = ul.elapsed < FADE ? 1 : 1 - (ul.elapsed - FADE) / (LIFE - FADE)
+          const rt = ul.th + s.earthRot
+          const sinPh = Math.sin(ul.ph2)
+          const px = cx + R * sinPh * Math.cos(rt)
+          const py = cy + R * Math.cos(ul.ph2)
+          const depth = sinPh * Math.sin(rt)
+          if (depth >= -0.08) {
+            const vis = (depth + 0.08) / 1.08
+            const hue = s.mode === 'mission' ? ul.missionHue : ul.valuesHue
+            const pulse = s.reducedMotion ? 1 : 0.65 + 0.35 * Math.sin(ul.phase)
+
+            // Expanding ring — plays once over first ~1.5s
+            if (ul.elapsed < 90) {
+              const rp = ul.elapsed / 90
+              ctx.beginPath()
+              ctx.arc(px, py, 5 + rp * 14, 0, Math.PI * 2)
+              ctx.strokeStyle = `hsla(${hue},80%,78%,${(1 - rp) * 0.55 * vis * fade})`
+              ctx.lineWidth = 1.5
+              ctx.stroke()
+            }
+
+            // Bright pulsing core
+            const rad = 6.5 * (0.55 + 0.45 * vis) * pulse
+            const a = 0.9 * vis * fade
+            const ugr = ctx.createRadialGradient(px, py, 0, px, py, rad * 3.5)
+            ugr.addColorStop(0, `hsla(${hue},90%,92%,${a})`)
+            ugr.addColorStop(0.3, `hsla(${hue},72%,68%,${a * 0.65})`)
+            ugr.addColorStop(1, 'rgba(0,0,0,0)')
+            ctx.beginPath()
+            ctx.arc(px, py, rad * 3.5, 0, Math.PI * 2)
+            ctx.fillStyle = ugr
+            ctx.fill()
+          }
+        }
+      }
+
       ctx.restore()
 
       const ev = ctx.createRadialGradient(cx, cy, R * 0.87, cx, cy, R)

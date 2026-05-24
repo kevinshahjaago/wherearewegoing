@@ -10,6 +10,30 @@ import EarthCanvas, { type EarthCanvasHandle, type EarthMode } from './EarthCanv
 import type { VisionItem } from '@/lib/services/earth'
 import styles from './Journey.module.css'
 
+const CLIENT_PRINCIPLE_HUES: Record<string, number> = {
+  'Care precedes transaction': 30,
+  'Repair over perfection': 15,
+  'Curiosity over certainty': 55,
+  'Presence as practice': 170,
+  'Long-term thinking': 220,
+  Interdependence: 130,
+  'Truth-telling as kindness': 280,
+  'Local action': 320,
+}
+
+function deriveClientValuesHue(principles: string[]): number {
+  if (!principles.length) return 45
+  const hues = principles.map((p) => {
+    if (p in CLIENT_PRINCIPLE_HUES) return CLIENT_PRINCIPLE_HUES[p]
+    let h = 0
+    for (const c of p) h = (h * 31 + c.charCodeAt(0)) & 0xffff
+    return h % 360
+  })
+  const sinSum = hues.reduce((s, h) => s + Math.sin((h * Math.PI) / 180), 0)
+  const cosSum = hues.reduce((s, h) => s + Math.cos((h * Math.PI) / 180), 0)
+  return Math.round(((Math.atan2(sinSum, cosSum) * 180) / Math.PI + 360) % 360)
+}
+
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6
 type QuestionContent = { line1: string; line2: string } | null
 type Delta = {
@@ -176,7 +200,7 @@ export default function Journey({
     ])
     setLocationPromptVisible(false)
 
-    fetch('/api/contribute', {
+    const contributeFetch = fetch('/api/contribute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -188,12 +212,27 @@ export default function Journey({
         isReturn: false,
       }),
     })
-      .then((r) => {
-        if (!r.ok) r.json().then((b) => console.error('[contribute]', r.status, b))
+      .then(async (r) => {
+        if (!r.ok) {
+          r.json()
+            .then((b) => console.error('[contribute]', r.status, b))
+            .catch(() => null)
+          return undefined as number | undefined
+        }
+        const body = (await r.json()) as { success: boolean; hue?: number }
+        return body.hue
       })
-      .catch((e) => console.error('[contribute]', e))
+      .catch((e: unknown) => {
+        console.error('[contribute]', e)
+        return undefined as number | undefined
+      })
 
-    const [, fetched] = await Promise.all([animDone, voicesFetch])
+    const [, fetched, userHue] = await Promise.all([animDone, voicesFetch, contributeFetch])
+    earthRef.current?.pulseUserLight(
+      geo ?? undefined,
+      userHue,
+      deriveClientValuesHue(principlesRef.current)
+    )
     goReveal(fetched ?? null)
   }, [transitionQuestion, goReveal])
 
@@ -268,6 +307,8 @@ export default function Journey({
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
     ])
     setLocationPromptVisible(false)
+
+    earthRef.current?.pulseUserLight(geo ?? undefined)
 
     fetch('/api/contribute', {
       method: 'POST',
