@@ -3,6 +3,9 @@
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 
 const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
+// Seed lights use biased palettes so the mode toggle is visually distinct
+const MISSION_SEED_HUES = [15, 35, 55, 35, 15, 55, 310, 280] // warm: fire/love/hope
+const VALUES_SEED_HUES = [130, 170, 220, 130, 170, 55, 280, 320] // cool: nature/peace/wisdom
 
 export type EarthMode = 'mission' | 'values'
 
@@ -184,8 +187,8 @@ export default function EarthCanvas({
           th: Math.random() * Math.PI * 2,
           ph2: Math.acos(2 * Math.random() - 1),
           r: 1.5 + Math.random() * 3,
-          missionHue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
-          valuesHue: THEME_HUES[Math.floor(Math.random() * THEME_HUES.length)],
+          missionHue: MISSION_SEED_HUES[Math.floor(Math.random() * MISSION_SEED_HUES.length)],
+          valuesHue: VALUES_SEED_HUES[Math.floor(Math.random() * VALUES_SEED_HUES.length)],
           a: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           ta: isAmbient ? 0.1 + Math.random() * 0.15 : 0.3 + Math.random() * 0.7,
           p: Math.random() * Math.PI * 2,
@@ -228,6 +231,18 @@ export default function EarthCanvas({
       ctx.beginPath()
       ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2)
       ctx.fillStyle = og
+      ctx.fill()
+
+      // Mode tint: warm amber (mission) ↔ sage green (values)
+      const tintHue = s.mode === 'mission' ? 38 : 145
+      const tintA = 0.055 + 0.018 * Math.sin(s.glowT * 0.7)
+      const tg = ctx.createRadialGradient(cx, cy, R * 0.15, cx, cy, R * 1.05)
+      tg.addColorStop(0, `hsla(${tintHue},58%,52%,${tintA})`)
+      tg.addColorStop(0.55, `hsla(${tintHue},48%,44%,${tintA * 0.45})`)
+      tg.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath()
+      ctx.arc(cx, cy, R * 1.05, 0, Math.PI * 2)
+      ctx.fillStyle = tg
       ctx.fill()
 
       const bg = ctx.createRadialGradient(cx - R * 0.22, cy - R * 0.18, R * 0.04, cx, cy, R)
