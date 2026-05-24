@@ -233,6 +233,7 @@ export default function Journey({
       userHue,
       deriveClientValuesHue(principlesRef.current)
     )
+    if (userHue !== undefined) setLiveContributions((n) => n + 1)
     goReveal(fetched ?? null)
   }, [transitionQuestion, goReveal])
 
