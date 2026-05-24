@@ -26,18 +26,23 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://wherearewegoing.earth')
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'Where Are We Going?',
   description: "Add your light, and then see everyone else's.",
   openGraph: {
     title: 'Where Are We Going?',
     description: "Add your light, and then see everyone else's.",
-    url: 'https://wherearewegoing.earth',
+    url: siteUrl,
     siteName: 'wherearewegoing.earth',
     type: 'website',
     images: [
       {
-        url: 'https://wherearewegoing.earth/og-image.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: "Where Are We Going? — Add your light, and then everyone else's.",
@@ -48,7 +53,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Where Are We Going?',
     description: "Add your light, and then see everyone else's.",
-    images: ['https://wherearewegoing.earth/og-image.png'],
+    images: ['/og-image.png'],
   },
 }
 
