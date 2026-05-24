@@ -3,6 +3,8 @@
 -- even if rows are inserted outside of the app (migrations, admin edits, etc.).
 -- At current scale the COUNT(*) overhead is negligible.
 
+-- SECURITY DEFINER is required: the trigger runs as the inserting user who
+-- has no UPDATE policy on contribution_stats (RLS blocks it otherwise).
 CREATE OR REPLACE FUNCTION sync_contribution_count()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -10,9 +12,9 @@ BEGIN
   SET total = (SELECT COUNT(*) FROM contributions),
       updated_at = now()
   WHERE id = 1;
-  RETURN NEW;
+  RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Re-point the trigger to the new function
 DROP TRIGGER IF EXISTS on_contribution_insert ON contributions;
