@@ -301,7 +301,7 @@ export default function Journey({
     setSuggestsVisible(false)
     setInputVisible(false)
     transitionQuestion({ line1: copy.commitment.line1, line2: copy.commitment.line2 }, () =>
-      showInput(copy.commitment.placeholder, copy.commitment.label)
+      showInput(randomPlaceholder(copy.commitment.placeholders), copy.commitment.label)
     )
     showBtn(copy.commitment.cta)
   }, [transitionQuestion, showBtn, showInput])
