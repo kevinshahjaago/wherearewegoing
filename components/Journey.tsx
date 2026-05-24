@@ -609,9 +609,11 @@ export default function Journey({
     earthRef.current?.setMode(earthMode)
   }, [earthMode])
 
-  // R key: jump to return flow from reveal screen
+  // R key: jump to return flow from reveal screen (not while typing)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'TEXTAREA' || tag === 'INPUT') return
       if ((e.key === 'r' || e.key === 'R') && step >= 5) goReturn()
     }
     document.addEventListener('keydown', handler)
