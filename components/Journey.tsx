@@ -149,6 +149,9 @@ export default function Journey({
   const [suggestsVisible, setSuggestsVisible] = useState(false)
   const [principles, setPrinciples] = useState<string[]>([])
   const [usedSeeds, setUsedSeeds] = useState<Set<string>>(new Set())
+  // null = loading in progress; [] = loaded (use static fallback); string[] = dynamic suggestions
+  const [dynamicSeeds, setDynamicSeeds] = useState<string[] | null>(null)
+  const [seedsLoading, setSeedsLoading] = useState(false)
   const [displayVisions, setDisplayVisions] = useState<VisionItem[]>(FALLBACK_VISIONS)
   const [realVisions, setRealVisions] = useState<VisionItem[]>([])
   const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
@@ -254,8 +257,8 @@ export default function Journey({
         setPrincipleCount(fetched.principleCount ?? 0)
         setContributorCount(fetched.contributorCount ?? 0)
       }
-      // Use the full padded list so there are always lights to click (fallbacks fill in when DB is sparse)
-      earthRef.current?.loadVisionLights(visions)
+      // Only real DB visions as clickable lights on the globe
+      earthRef.current?.loadVisionLights(real)
       setCycleVoiceIdx(0)
       setExploreOpen(false)
       setTimeout(() => setCycleVoiceVisible(true), 1200)
@@ -381,11 +384,12 @@ export default function Journey({
     setAnchoredMission(val)
     track('mission_submitted', { config_version: String(EXPERIENCE_CONFIG.version) })
     // Brief burst so the user feels their light land in the earth on mission submit
-    // Hue is random here — the canonical hue arrives via the real-time channel after API assigns it
     earthRef.current?.addLights(3)
     setStep(2)
     setPrinciples([])
     setUsedSeeds(new Set())
+    setDynamicSeeds(null)
+    setSeedsLoading(true)
     setInputVisible(false)
     setSeedsVisible(true)
     setSuggestsVisible(true)
@@ -393,6 +397,19 @@ export default function Journey({
       showInput(copy.principles.placeholder, copy.principles.label)
     )
     showBtn(copy.principles.cta)
+
+    // Fire the first-principles agent — resolves while the user reads the question
+    fetch('/api/first-principles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mission: val }),
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<{ principles: string[] }>) : null))
+      .then((data) => {
+        setDynamicSeeds(data?.principles?.length ? data.principles : [])
+      })
+      .catch(() => setDynamicSeeds([]))
+      .finally(() => setSeedsLoading(false))
   }, [transitionQuestion, showBtn, showInput])
 
   const goMission = useCallback(() => {
@@ -600,6 +617,9 @@ export default function Journey({
         break
       case 3:
         void goContribute()
+        break
+      case 5:
+        if (returnInputOpen) void goContributeReturn()
         break
       case 6:
         if (returnInputOpen) {
@@ -1029,22 +1049,31 @@ export default function Journey({
         <div
           role="group"
           aria-label="Suggested values"
+          aria-busy={seedsLoading}
           className={`${styles.suggests}${suggestsVisible ? ` ${styles.suggestsVisible}` : ''}`}
         >
-          {(copy.principles.seeds as readonly string[]).map((seed) => {
-            const used = usedSeeds.has(seed)
-            return (
-              <button
-                key={seed}
-                className={`${styles.pill}${used ? ` ${styles.pillUsed}` : ''}`}
-                onClick={() => addSuggest(seed)}
-                aria-pressed={used}
-                tabIndex={used ? -1 : 0}
-              >
-                {seed}
-              </button>
-            )
-          })}
+          {seedsLoading
+            ? // Ghost pills while Claude is thinking
+              Array.from({ length: 6 }).map((_, i) => (
+                <span key={i} className={styles.pillSkeleton} aria-hidden="true" />
+              ))
+            : (dynamicSeeds?.length
+                ? dynamicSeeds
+                : (copy.principles.seeds as readonly string[])
+              ).map((seed) => {
+                const used = usedSeeds.has(seed)
+                return (
+                  <button
+                    key={seed}
+                    className={`${styles.pill}${used ? ` ${styles.pillUsed}` : ''}`}
+                    onClick={() => addSuggest(seed)}
+                    aria-pressed={used}
+                    tabIndex={used ? -1 : 0}
+                  >
+                    {seed}
+                  </button>
+                )
+              })}
         </div>
 
         <div className={`${styles.inputWrap}${inputVisible ? ` ${styles.inputWrapVisible}` : ''}`}>
@@ -1102,12 +1131,18 @@ export default function Journey({
           {btnLabel}
         </button>
 
+        {step === 5 && visitType === 'return' && !yourMark && !returnInputOpen && (
+          <button className={styles.returnAction} onClick={openReturnInput}>
+            Add today&apos;s light
+          </button>
+        )}
+
         {step === 6 && btnVisible && (
           <button
             className={styles.returnAction}
             onClick={returnInputOpen ? () => void goExploreOnly() : openReturnInput}
           >
-            {returnInputOpen ? 'Skip — explore the earth' : 'Add today’s light'}
+            {returnInputOpen ? 'Skip — explore the earth' : "Add today's light"}
           </button>
         )}
       </div>

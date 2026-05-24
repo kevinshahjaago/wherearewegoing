@@ -246,7 +246,7 @@ export default function EarthCanvas({
       if (!eC) return
       const ctx = eC.getContext('2d')!
       ctx.clearRect(0, 0, s.W, s.H)
-      s.earthRot += s.reducedMotion ? 0.0001 : 0.0007
+      s.earthRot -= s.reducedMotion ? 0.0001 : 0.0007
       if (!s.reducedMotion) s.glowT += 0.011
       const R = s.eR,
         { cx, cy } = s
@@ -325,7 +325,7 @@ export default function EarthCanvas({
             gStarted = false
             continue
           }
-          const px = cx + R * Math.sin(ph2) * Math.cos(rt)
+          const px = cx - R * Math.sin(ph2) * Math.cos(rt)
           const py = cy - R * Math.cos(ph2)
           if (!gStarted) {
             ctx.moveTo(px, py)
@@ -348,7 +348,7 @@ export default function EarthCanvas({
             gStarted = false
             continue
           }
-          const px = cx + R * Math.sin(gph2) * Math.cos(rt)
+          const px = cx - R * Math.sin(gph2) * Math.cos(rt)
           const py = cy - R * Math.cos(gph2)
           if (!gStarted) {
             ctx.moveTo(px, py)
@@ -371,7 +371,7 @@ export default function EarthCanvas({
           const cph2 = ((90 - lat) * Math.PI) / 180
           const crt = cth + s.earthRot
           const csp = Math.sin(cph2)
-          const cpx = cx + R * csp * Math.cos(crt)
+          const cpx = cx - R * csp * Math.cos(crt)
           const cpy = cy - R * Math.cos(cph2)
           const cdepth = csp * Math.sin(crt)
           if (cdepth < -0.05) {
@@ -396,7 +396,7 @@ export default function EarthCanvas({
         }
         const rt = l.th + s.earthRot,
           sp = Math.sin(l.ph2)
-        const px = cx + R * sp * Math.cos(rt),
+        const px = cx - R * sp * Math.cos(rt),
           py = cy - R * Math.cos(l.ph2)
         const depth = sp * Math.sin(rt)
         if (depth < -0.08) continue
@@ -419,7 +419,7 @@ export default function EarthCanvas({
       for (const vl of s.visionLights) {
         const rt = vl.th + s.earthRot
         const sp = Math.sin(vl.ph2)
-        const px = cx + R * sp * Math.cos(rt)
+        const px = cx - R * sp * Math.cos(rt)
         const py = cy - R * Math.cos(vl.ph2)
         const depth = sp * Math.sin(rt)
         vl.projX = px
@@ -472,7 +472,7 @@ export default function EarthCanvas({
           const fade = ul.elapsed < FADE ? 1 : 1 - (ul.elapsed - FADE) / (LIFE - FADE)
           const rt = ul.th + s.earthRot
           const sinPh = Math.sin(ul.ph2)
-          const px = cx + R * sinPh * Math.cos(rt)
+          const px = cx - R * sinPh * Math.cos(rt)
           const py = cy - R * Math.cos(ul.ph2)
           const depth = sinPh * Math.sin(rt)
           if (depth >= -0.08) {
