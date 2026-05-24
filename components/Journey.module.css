@@ -273,16 +273,20 @@
   display: block;
 }
 
-/* ── Share row — fixed bottom-right, unobtrusive ── */
+/* ── Share row — centered at bottom, horizontal ── */
 .shareRow {
   display: none;
   position: fixed;
-  bottom: max(1.2rem, calc(env(safe-area-inset-bottom, 0px) + 0.8rem));
-  right: 1.4rem;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.3rem;
+  bottom: max(1.4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem));
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2rem 1rem;
   z-index: 20;
+  width: min(340px, 84vw);
 }
 
 .shareRowVisible {
@@ -292,19 +296,19 @@
 .shareBtn {
   background: none;
   border: none;
-  color: rgba(237, 232, 218, 0.28);
+  color: rgba(237, 232, 218, 0.32);
   font-family: var(--font-dm-sans), sans-serif;
-  font-size: 0.5rem;
-  letter-spacing: 0.12em;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.2rem 0;
+  padding: 0.25rem 0.1rem;
   cursor: pointer;
   transition: color 0.25s;
-  text-align: right;
+  white-space: nowrap;
 }
 
 .shareBtn:hover {
-  color: rgba(201, 168, 76, 0.6);
+  color: rgba(201, 168, 76, 0.7);
 }
 
 /* ── Previous mission (return visit) ── */

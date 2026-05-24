@@ -2,7 +2,6 @@
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 import type { VisionItem } from '@/lib/services/earth'
-import { COASTLINES } from '@/lib/coastlines'
 
 const THEME_HUES = [15, 35, 55, 130, 170, 210, 240, 280, 310]
 // Seed lights use biased palettes so the mode toggle is visually distinct
@@ -74,6 +73,7 @@ type AnimState = {
   rafId: number
   reducedMotion: boolean
   mode: EarthMode
+  coastlines: [number, number][][]
 }
 
 export default function EarthCanvas({
@@ -106,6 +106,7 @@ export default function EarthCanvas({
     rafId: 0,
     reducedMotion: false,
     mode: 'mission',
+    coastlines: [],
   })
 
   useImperativeHandle(ref, () => ({
@@ -325,7 +326,7 @@ export default function EarthCanvas({
             continue
           }
           const px = cx + R * Math.sin(ph2) * Math.cos(rt)
-          const py = cy + R * Math.cos(ph2)
+          const py = cy - R * Math.cos(ph2)
           if (!gStarted) {
             ctx.moveTo(px, py)
             gStarted = true
@@ -348,7 +349,7 @@ export default function EarthCanvas({
             continue
           }
           const px = cx + R * Math.sin(gph2) * Math.cos(rt)
-          const py = cy + R * Math.cos(gph2)
+          const py = cy - R * Math.cos(gph2)
           if (!gStarted) {
             ctx.moveTo(px, py)
             gStarted = true
@@ -359,10 +360,10 @@ export default function EarthCanvas({
         ctx.stroke()
       }
 
-      // Continent coastlines (Natural Earth 110m)
+      // Continent coastlines (Natural Earth 50m, lazy-loaded)
       ctx.lineWidth = 0.8
       ctx.strokeStyle = 'rgba(140,190,255,0.28)'
-      for (const seg of COASTLINES) {
+      for (const seg of s.coastlines) {
         ctx.beginPath()
         let csStarted = false
         for (const [lat, lng] of seg) {
@@ -371,7 +372,7 @@ export default function EarthCanvas({
           const crt = cth + s.earthRot
           const csp = Math.sin(cph2)
           const cpx = cx + R * csp * Math.cos(crt)
-          const cpy = cy + R * Math.cos(cph2)
+          const cpy = cy - R * Math.cos(cph2)
           const cdepth = csp * Math.sin(crt)
           if (cdepth < -0.05) {
             csStarted = false
@@ -396,7 +397,7 @@ export default function EarthCanvas({
         const rt = l.th + s.earthRot,
           sp = Math.sin(l.ph2)
         const px = cx + R * sp * Math.cos(rt),
-          py = cy + R * Math.cos(l.ph2)
+          py = cy - R * Math.cos(l.ph2)
         const depth = sp * Math.sin(rt)
         if (depth < -0.08) continue
         const vis = (depth + 0.08) / 1.08
@@ -419,7 +420,7 @@ export default function EarthCanvas({
         const rt = vl.th + s.earthRot
         const sp = Math.sin(vl.ph2)
         const px = cx + R * sp * Math.cos(rt)
-        const py = cy + R * Math.cos(vl.ph2)
+        const py = cy - R * Math.cos(vl.ph2)
         const depth = sp * Math.sin(rt)
         vl.projX = px
         vl.projY = py
@@ -472,7 +473,7 @@ export default function EarthCanvas({
           const rt = ul.th + s.earthRot
           const sinPh = Math.sin(ul.ph2)
           const px = cx + R * sinPh * Math.cos(rt)
-          const py = cy + R * Math.cos(ul.ph2)
+          const py = cy - R * Math.cos(ul.ph2)
           const depth = sinPh * Math.sin(rt)
           if (depth >= -0.08) {
             const vis = (depth + 0.08) / 1.08
@@ -532,6 +533,10 @@ export default function EarthCanvas({
     seedLights()
     loop()
     window.addEventListener('resize', resize)
+    // Lazy-load coastline data after initial render (separate chunk, non-blocking)
+    import('@/lib/coastlines').then(({ COASTLINES }) => {
+      s.coastlines = COASTLINES
+    })
     return () => {
       cancelAnimationFrame(s.rafId)
       window.removeEventListener('resize', resize)

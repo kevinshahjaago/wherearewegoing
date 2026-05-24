@@ -568,6 +568,24 @@ export default function Journey({
     )
   }, [])
 
+  const shareThreads = useCallback(() => {
+    track('share_clicked', { channel: 'threads' })
+    window.open(
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }, [])
+
+  const shareBluesky = useCallback(() => {
+    track('share_clicked', { channel: 'bluesky' })
+    window.open(
+      `https://bsky.app/intent/compose?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }, [])
+
   const handleBtn = useCallback(() => {
     if (btnDisabled) return
     switch (step) {
@@ -1058,14 +1076,20 @@ export default function Journey({
           aria-label="Share options"
           className={`${styles.shareRow}${shareRowVisible ? ` ${styles.shareRowVisible}` : ''}`}
         >
-          <button className={styles.shareBtn} onClick={copyLink}>
-            {copyLabel}
+          <button className={styles.shareBtn} onClick={shareX}>
+            X
+          </button>
+          <button className={styles.shareBtn} onClick={shareThreads}>
+            Threads
+          </button>
+          <button className={styles.shareBtn} onClick={shareBluesky}>
+            Bluesky
           </button>
           <button className={styles.shareBtn} onClick={shareWhatsApp}>
             WhatsApp
           </button>
-          <button className={styles.shareBtn} onClick={shareX}>
-            X
+          <button className={styles.shareBtn} onClick={copyLink}>
+            {copyLabel}
           </button>
         </div>
 
