@@ -75,10 +75,12 @@ export async function POST(req: Request) {
     clearTimeout(timeout)
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text : ''
+    // Haiku sometimes wraps output in ```json ... ``` fences — strip them
+    const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
 
     let parsed: { principles?: unknown }
     try {
-      parsed = JSON.parse(raw) as { principles?: unknown }
+      parsed = JSON.parse(cleaned) as { principles?: unknown }
     } catch {
       log.warn({ raw }, 'Claude returned non-JSON — falling back to empty')
       return NextResponse.json({ principles: [] })

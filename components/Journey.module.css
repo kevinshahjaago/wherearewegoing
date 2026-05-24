@@ -38,6 +38,9 @@
 .btn,
 .shareRow,
 .shareBtn,
+.shareOptions,
+.shareClose,
+.inviteBtn,
 .seeds,
 .suggests,
 .exploreToggle,
@@ -383,24 +386,43 @@
   display: block;
 }
 
-/* ── Share row — centered at bottom, horizontal ── */
+/* ── Share row — single invite button, centered in normal flow above main btn ── */
 .shareRow {
   display: none;
-  position: fixed;
-  bottom: max(1.4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem));
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  gap: 0.2rem 1rem;
-  z-index: 20;
-  width: min(340px, 84vw);
+  width: min(380px, 90vw);
+  margin-bottom: 0.5rem;
 }
 
 .shareRowVisible {
   display: flex;
+}
+
+.inviteBtn {
+  background: none;
+  border: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.54rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(237, 232, 218, 0.45);
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  transition: color 0.25s;
+}
+
+.inviteBtn:hover {
+  color: rgba(201, 168, 76, 0.8);
+}
+
+.shareOptions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem 0.75rem;
+  padding: 0.5rem 0;
 }
 
 .shareBtn {
@@ -419,6 +441,20 @@
 
 .shareBtn:hover {
   color: rgba(201, 168, 76, 0.9);
+}
+
+.shareClose {
+  background: none;
+  border: none;
+  font-size: 0.55rem;
+  color: rgba(237, 232, 218, 0.3);
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  transition: color 0.2s;
+}
+
+.shareClose:hover {
+  color: rgba(237, 232, 218, 0.65);
 }
 
 /* ── Previous mission (return visit) ── */

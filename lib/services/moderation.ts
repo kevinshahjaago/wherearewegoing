@@ -13,6 +13,8 @@ import logger from '@/lib/logger'
 
 const client = new Anthropic()
 
+const BLOCKLIST = /\b(fuck|shit|ass|bitch|cunt|dick|pussy|nigger|faggot|retard)\b/i
+
 const SYSTEM_PROMPT = `You are a compassionate content moderator for a global Earth vision platform where people share what they want Earth's mission to be.
 
 Review the submitted mission and principles. Evaluate in this exact order and return ONE JSON response:
@@ -78,7 +80,9 @@ interface RawModerationResponse {
 
 function parsePrinciples(raw: unknown, fallback: string[]): string[] {
   if (!Array.isArray(raw)) return fallback
-  return (raw as unknown[]).filter((p): p is string => typeof p === 'string').slice(0, 10)
+  return (raw as unknown[])
+    .filter((p): p is string => typeof p === 'string' && !BLOCKLIST.test(p))
+    .slice(0, 10)
 }
 
 export async function moderateContribution(
@@ -113,10 +117,11 @@ export async function moderateContribution(
     clearTimeout(timeout)
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text : ''
+    const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
 
     let parsed: RawModerationResponse
     try {
-      parsed = JSON.parse(raw) as RawModerationResponse
+      parsed = JSON.parse(cleaned) as RawModerationResponse
     } catch {
       log.warn({ raw }, 'Moderation returned non-JSON — passing through')
       return { action: 'pass', mission, principles }

@@ -44,92 +44,6 @@ type Delta = {
 
 const { copy } = EXPERIENCE_CONFIG
 
-const FALLBACK_VISIONS: VisionItem[] = [
-  {
-    mission: 'To reduce unnecessary suffering',
-    missionHue: 210,
-    valuesHue: 170,
-    countryCode: null,
-    principles: ['Long-term thinking', 'Care precedes transaction'],
-  },
-  {
-    mission: 'To understand itself',
-    missionHue: 280,
-    valuesHue: 220,
-    countryCode: null,
-    principles: ['Curiosity over certainty'],
-  },
-  {
-    mission: 'To love without keeping score',
-    missionHue: 35,
-    valuesHue: 30,
-    countryCode: null,
-    principles: ['Care precedes transaction', 'Presence as practice'],
-  },
-  {
-    mission: 'To leave it better',
-    missionHue: 130,
-    valuesHue: 130,
-    countryCode: null,
-    principles: ['Long-term thinking', 'Repair over perfection'],
-  },
-  {
-    mission: 'To protect what is fragile',
-    missionHue: 170,
-    valuesHue: 170,
-    countryCode: null,
-    principles: ['Interdependence', 'Local action'],
-  },
-  {
-    mission: 'To be present',
-    missionHue: 55,
-    valuesHue: 170,
-    countryCode: null,
-    principles: ['Presence as practice'],
-  },
-  {
-    mission: 'To repair what is broken',
-    missionHue: 15,
-    valuesHue: 15,
-    countryCode: null,
-    principles: ['Repair over perfection', 'Truth-telling as kindness'],
-  },
-  {
-    mission: 'To see each other clearly',
-    missionHue: 240,
-    valuesHue: 280,
-    countryCode: null,
-    principles: ['Truth-telling as kindness', 'Curiosity over certainty'],
-  },
-  {
-    mission: 'That the future gets a vote',
-    missionHue: 220,
-    valuesHue: 220,
-    countryCode: null,
-    principles: ['Long-term thinking', 'Interdependence'],
-  },
-  {
-    mission: 'To mean what we say',
-    missionHue: 280,
-    valuesHue: 280,
-    countryCode: null,
-    principles: ['Truth-telling as kindness'],
-  },
-  {
-    mission: 'To act as if we are responsible',
-    missionHue: 130,
-    valuesHue: 55,
-    countryCode: null,
-    principles: ['Interdependence', 'Local action'],
-  },
-  {
-    mission: 'To stop treating people as problems',
-    missionHue: 310,
-    valuesHue: 30,
-    countryCode: null,
-    principles: ['Care precedes transaction', 'Presence as practice'],
-  },
-]
 
 export default function Journey({
   earthFill = 0,
@@ -152,7 +66,7 @@ export default function Journey({
   // null = loading in progress; [] = loaded (use static fallback); string[] = dynamic suggestions
   const [dynamicSeeds, setDynamicSeeds] = useState<string[] | null>(null)
   const [seedsLoading, setSeedsLoading] = useState(false)
-  const [displayVisions, setDisplayVisions] = useState<VisionItem[]>(FALLBACK_VISIONS)
+  const [displayVisions, setDisplayVisions] = useState<VisionItem[]>([])
   const [realVisions, setRealVisions] = useState<VisionItem[]>([])
   const [cycleVoiceIdx, setCycleVoiceIdx] = useState(0)
   const [cycleVoiceVisible, setCycleVoiceVisible] = useState(false)
@@ -183,6 +97,7 @@ export default function Journey({
     type: 'obscenity' | 'harm'
     explanation: string
   } | null>(null)
+  const [shareExpanded, setShareExpanded] = useState(false)
 
   const earthRef = useRef<EarthCanvasHandle>(null)
   const questionRef = useRef<HTMLDivElement>(null)
@@ -236,16 +151,9 @@ export default function Journey({
         contributorCount: number
       } | null = null
     ) => {
-      // Real visions shown in the explore list (no fallbacks — count must match stats bar)
+      // Only real DB visions — no fallbacks anywhere
       const real = fetched?.visions ?? []
       setRealVisions(real)
-      // Cycling voice blends in fallbacks for variety when DB is sparse
-      const padded = [...real]
-      for (const fb of FALLBACK_VISIONS) {
-        if (padded.length >= 12) break
-        padded.push(fb)
-      }
-      const visions = padded.length > 0 ? padded : FALLBACK_VISIONS
       track('voices_revealed')
       setStep(5)
       if (missionText.current) {
@@ -255,7 +163,7 @@ export default function Journey({
       }
       transitionQuestion(null)
 
-      setDisplayVisions(visions)
+      setDisplayVisions(real)
       setSelectedVision(null)
       if (fetched) {
         setCountryCount(fetched.countryCount)
@@ -568,12 +476,12 @@ export default function Journey({
   )
 
   const SHARE_URL = 'https://wherearewegoing.earth'
-  const SHARE_TEXT = 'Where are we going? Add your voice →'
+  const SHARE_TEXT = 'Thank you for your curiosity.'
 
   const copyLink = useCallback(async () => {
     track('share_clicked', { channel: 'copy' })
     try {
-      await navigator.clipboard.writeText(SHARE_URL)
+      await navigator.clipboard.writeText(`${SHARE_TEXT}\n${SHARE_URL}`)
       setCopyLabel(copy.reveal.copied)
       setTimeout(() => setCopyLabel(copy.reveal.copyLink), 2000)
     } catch {
@@ -584,7 +492,7 @@ export default function Journey({
   const shareWhatsApp = useCallback(() => {
     track('share_clicked', { channel: 'whatsapp' })
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`)}`,
       '_blank',
       'noopener,noreferrer'
     )
@@ -593,7 +501,7 @@ export default function Journey({
   const shareX = useCallback(() => {
     track('share_clicked', { channel: 'x' })
     window.open(
-      `https://x.com/intent/tweet?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      `https://x.com/intent/tweet?text=${encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`)}`,
       '_blank',
       'noopener,noreferrer'
     )
@@ -602,7 +510,7 @@ export default function Journey({
   const shareThreads = useCallback(() => {
     track('share_clicked', { channel: 'threads' })
     window.open(
-      `https://www.threads.net/intent/post?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`)}`,
       '_blank',
       'noopener,noreferrer'
     )
@@ -611,7 +519,7 @@ export default function Journey({
   const shareBluesky = useCallback(() => {
     track('share_clicked', { channel: 'bluesky' })
     window.open(
-      `https://bsky.app/intent/compose?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+      `https://bsky.app/intent/compose?text=${encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`)}`,
       '_blank',
       'noopener,noreferrer'
     )
@@ -619,7 +527,7 @@ export default function Journey({
 
   const shareSMS = useCallback(() => {
     track('share_clicked', { channel: 'sms' })
-    window.open(`sms:?body=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`, '_self')
+    window.open(`sms:?body=${encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`)}`, '_self')
   }, [])
 
   // Web Share API — on mobile opens the native share sheet (Instagram, TikTok, YouTube, etc.)
@@ -629,8 +537,7 @@ export default function Journey({
       if (navigator.share) {
         await navigator.share({ title: 'Where are we going?', text: SHARE_TEXT, url: SHARE_URL })
       } else {
-        // fallback: copy link
-        await navigator.clipboard.writeText(`${SHARE_TEXT} ${SHARE_URL}`)
+        await navigator.clipboard.writeText(`${SHARE_TEXT}\n${SHARE_URL}`)
         setCopyLabel(copy.reveal.copied)
         setTimeout(() => setCopyLabel(copy.reveal.copyLink), 2000)
       }
@@ -1157,31 +1064,54 @@ export default function Journey({
         )}
 
         <div
-          role="group"
-          aria-label="Share options"
           className={`${styles.shareRow}${shareRowVisible ? ` ${styles.shareRowVisible}` : ''}`}
         >
-          <button className={styles.shareBtn} onClick={shareX}>
-            X
-          </button>
-          <button className={styles.shareBtn} onClick={shareThreads}>
-            Threads
-          </button>
-          <button className={styles.shareBtn} onClick={shareBluesky}>
-            Bluesky
-          </button>
-          <button className={styles.shareBtn} onClick={shareWhatsApp}>
-            WhatsApp
-          </button>
-          <button className={styles.shareBtn} onClick={shareSMS}>
-            Text
-          </button>
-          <button className={styles.shareBtn} onClick={() => void shareNative()}>
-            Share ↗
-          </button>
-          <button className={styles.shareBtn} onClick={copyLink}>
-            {copyLabel}
-          </button>
+          {!shareExpanded ? (
+            <button
+              className={styles.inviteBtn}
+              onClick={() => setShareExpanded(true)}
+              aria-expanded="false"
+              aria-controls="share-options"
+            >
+              Invite others
+            </button>
+          ) : (
+            <div
+              id="share-options"
+              role="group"
+              aria-label="Share options"
+              className={styles.shareOptions}
+            >
+              <button className={styles.shareBtn} onClick={shareX}>
+                X
+              </button>
+              <button className={styles.shareBtn} onClick={shareThreads}>
+                Threads
+              </button>
+              <button className={styles.shareBtn} onClick={shareBluesky}>
+                Bluesky
+              </button>
+              <button className={styles.shareBtn} onClick={shareWhatsApp}>
+                WhatsApp
+              </button>
+              <button className={styles.shareBtn} onClick={shareSMS}>
+                Text
+              </button>
+              <button className={styles.shareBtn} onClick={() => void shareNative()}>
+                Share ↗
+              </button>
+              <button className={styles.shareBtn} onClick={copyLink}>
+                {copyLabel}
+              </button>
+              <button
+                className={styles.shareClose}
+                onClick={() => setShareExpanded(false)}
+                aria-label="Close share options"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
         <button
