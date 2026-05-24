@@ -35,6 +35,20 @@ export const metadata: Metadata = {
     url: 'https://wherearewegoing.earth',
     siteName: 'wherearewegoing.earth',
     type: 'website',
+    images: [
+      {
+        url: 'https://wherearewegoing.earth/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Where Are We Going? — A living question answered by everyone who has ever asked it.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Where Are We Going?',
+    description: 'A living question answered by everyone who has ever asked it.',
+    images: ['https://wherearewegoing.earth/og-image.png'],
   },
 }
 
