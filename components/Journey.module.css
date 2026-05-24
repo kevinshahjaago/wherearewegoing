@@ -801,6 +801,16 @@
   margin-top: 0.8rem;
 }
 
+/* ── Return hint sentence (shown on reveal screen instead of disabled btn) ── */
+.returnHint {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  color: rgba(237, 232, 218, 0.42);
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+
 /* ── Return secondary action (add light / skip) ── */
 .returnAction {
   background: none;

@@ -76,7 +76,7 @@ export const EXPERIENCE_CONFIG = {
       voicesRegionLabel: 'Visions from around the world',
       copyLink: 'Copy link',
       copied: 'Copied ✓',
-      returnCta: 'Return another day',
+      returnHint: 'Come back soon — new lights are joining every day.',
       modeToggleMission: 'Mission',
       modeToggleValues: 'Values',
       exploreAll: 'Explore all visions',

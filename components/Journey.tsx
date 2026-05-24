@@ -179,7 +179,6 @@ export default function Journey({
       setExploreOpen(false)
       setTimeout(() => setCycleVoiceVisible(true), 1200)
       setTimeout(() => setShareRowVisible(true), 2800)
-      showBtn(copy.reveal.returnCta, true)
     },
     [transitionQuestion, showBtn]
   )
@@ -1121,6 +1120,10 @@ export default function Journey({
             </div>
           )}
         </div>
+
+        {step === 5 && !returnInputOpen && (
+          <p className={styles.returnHint}>{copy.reveal.returnHint}</p>
+        )}
 
         <button
           className={`${styles.btn}${btnVisible ? ` ${styles.btnVisible}` : ''}`}
