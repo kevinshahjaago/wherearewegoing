@@ -169,6 +169,7 @@ export default function Journey({
   const [inputError, setInputError] = useState(false)
   const [locationPromptVisible, setLocationPromptVisible] = useState(false)
   const [lastMission, setLastMission] = useState<string | null>(null)
+  const [returnInputOpen, setReturnInputOpen] = useState(false)
   // null = session check in progress, 'first' | 'return' = determined
   const [visitType, setVisitType] = useState<'first' | 'return' | null>(null)
 
@@ -227,9 +228,11 @@ export default function Journey({
       const visions = padded.length > 0 ? padded : FALLBACK_VISIONS
       track('voices_revealed')
       setStep(5)
-      setYourMark(`"${missionText.current}"`)
-      setYourMarkVisible(true)
-      setTimeout(() => setYourMarkOpacity(1), 200)
+      if (missionText.current) {
+        setYourMark(`"${missionText.current}"`)
+        setYourMarkVisible(true)
+        setTimeout(() => setYourMarkOpacity(1), 200)
+      }
       transitionQuestion(null)
 
       setDisplayVisions(visions)
@@ -362,19 +365,44 @@ export default function Journey({
     showBtn(copy.mission.cta)
   }, [transitionQuestion, showBtn, showInput])
 
+  // Skip adding a mission; fetch fresh voices and go straight to the reveal.
+  const goExploreOnly = useCallback(async () => {
+    setBtnDisabled(true)
+    setBtnVisible(false)
+    setShiftsVisible(false)
+    setInputVisible(false)
+    setReturnInputOpen(false)
+    earthRef.current?.addLights(3)
+    const freshVoices = await fetch('/api/voices')
+      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .catch(() => null)
+    goReveal(freshVoices ?? null)
+  }, [goReveal])
+
+  // Reveal the optional mission input after the user opts in.
+  const openReturnInput = useCallback(() => {
+    setReturnInputOpen(true)
+    transitionQuestion({ line1: copy.return.line1, line2: copy.return.line2 }, () =>
+      showInput(copy.return.placeholder, copy.return.label)
+    )
+    showBtn('Add my light')
+  }, [transitionQuestion, showBtn, showInput])
+
   const goContributeReturn = useCallback(async () => {
     const mission = inputRef.current?.value.trim() ?? ''
     setInputVisible(false)
     setShiftsVisible(false)
-    earthRef.current?.addLights(7)
-    earthRef.current?.flash()
-    transitionQuestion({ line1: 'The earth holds', line2: 'every season of you.' })
-    setTimeout(() => {
-      setBtnVisible(false)
-      setBtnDisabled(true)
-    }, 500)
+    setReturnInputOpen(false)
+    setBtnVisible(false)
+    setBtnDisabled(true)
 
-    if (!mission) return
+    if (mission) {
+      missionText.current = mission
+      earthRef.current?.addLights(7)
+      earthRef.current?.flash()
+    } else {
+      earthRef.current?.addLights(3)
+    }
 
     setLocationPromptVisible(true)
     const geo = await Promise.race([
@@ -383,20 +411,26 @@ export default function Journey({
     ])
     setLocationPromptVisible(false)
 
-    earthRef.current?.pulseUserLight(geo ?? undefined)
+    if (mission) {
+      earthRef.current?.pulseUserLight(geo ?? undefined)
+      fetch('/api/contribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mission,
+          principles: [],
+          geolocation: geo ? { lat: geo.lat, lng: geo.lng } : undefined,
+          configVersion: EXPERIENCE_CONFIG.version,
+          isReturn: true,
+        }),
+      }).catch(() => null)
+    }
 
-    fetch('/api/contribute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mission,
-        principles: [],
-        geolocation: geo ? { lat: geo.lat, lng: geo.lng } : undefined,
-        configVersion: EXPERIENCE_CONFIG.version,
-        isReturn: true,
-      }),
-    }).catch(() => null)
-  }, [transitionQuestion])
+    const freshVoices = await fetch('/api/voices')
+      .then((r) => r.json() as Promise<{ visions: VisionItem[]; countryCount: number }>)
+      .catch(() => null)
+    goReveal(freshVoices ?? null)
+  }, [goReveal])
 
   const goReturn = useCallback(() => {
     setStep(6)
@@ -407,12 +441,11 @@ export default function Journey({
     setYourMarkVisible(false)
     setYourMarkOpacity(0)
     setShareRowVisible(false)
-    transitionQuestion({ line1: copy.return.line1, line2: copy.return.line2 }, () =>
-      showInput(copy.return.placeholder, copy.return.label)
-    )
+    setReturnInputOpen(false)
     setShiftsVisible(true)
-    showBtn(copy.return.cta)
-  }, [transitionQuestion, showBtn, showInput])
+    transitionQuestion(null)
+    showBtn('Explore the earth')
+  }, [transitionQuestion, showBtn])
 
   const addPrinciple = useCallback((text?: string) => {
     const val = text ?? inputRef.current?.value.trim() ?? ''
@@ -493,10 +526,14 @@ export default function Journey({
         void goContribute()
         break
       case 6:
-        void goContributeReturn()
+        if (returnInputOpen) {
+          void goContributeReturn()
+        } else {
+          void goExploreOnly()
+        }
         break
     }
-  }, [step, btnDisabled, goMission, goPrinciples, goCommitment, goContribute, goContributeReturn])
+  }, [step, btnDisabled, returnInputOpen, goMission, goPrinciples, goCommitment, goContribute, goContributeReturn, goExploreOnly])
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -979,6 +1016,15 @@ export default function Journey({
         >
           {btnLabel}
         </button>
+
+        {step === 6 && btnVisible && (
+          <button
+            className={styles.returnAction}
+            onClick={returnInputOpen ? () => void goExploreOnly() : openReturnInput}
+          >
+            {returnInputOpen ? 'Skip — explore the earth' : 'Add today’s light'}
+          </button>
+        )}
       </div>
     </>
   )
