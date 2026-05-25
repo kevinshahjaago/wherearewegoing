@@ -37,9 +37,10 @@ export default function PrivacyBanner() {
       </p>
 
       <p className={styles.body}>
-        If you choose to share your location, we use it to place your light on the earth. We only
-        store your general coordinates — not your street or address. You can say no and your vision
-        still counts.
+        We use your IP address to find roughly which country you&apos;re in, and place your light
+        there on the earth. If you choose to share your precise location, we use that instead — but
+        we only ever store general coordinates, not your street or address. You can decline both and
+        your vision still counts.
       </p>
 
       <p className={styles.body}>
