@@ -130,7 +130,9 @@ export default function Journey({
       setQuestionContent(content)
       setQuestionVisible(true)
       setTimeout(() => {
-        questionRef.current?.focus()
+        // Only focus when there's content — focusing an empty div shows a native
+        // focus ring on iOS Safari, which appears as a stray gold rectangle.
+        if (content) questionRef.current?.focus()
         cb?.()
       }, 50)
     }, 350)
@@ -763,18 +765,22 @@ export default function Journey({
     return () => clearTimeout(t)
   }, [reframeNotice])
 
-  // Cycle voices one at a time on the reveal screen
-  useEffect(() => {
-    if (step !== 5 || displayVisions.length === 0 || exploreOpen) return
-    const interval = setInterval(() => {
+  // Cycle voices driven by the canvas reveal callback (EarthCanvas fires when a light
+  // rotates into view). This replaces the old setInterval so the text is always tied
+  // to a specific, visually-highlighted light on the globe.
+  const handleVisionRevealed = useCallback(
+    (vision: VisionItem) => {
+      if (step !== 5 || exploreOpen || selectedVision) return
+      const idx = displayVisions.indexOf(vision)
+      if (idx === -1) return
       setCycleVoiceVisible(false)
       setTimeout(() => {
-        setCycleVoiceIdx((i) => (i + 1) % displayVisions.length)
+        setCycleVoiceIdx(idx)
         setCycleVoiceVisible(true)
-      }, 900)
-    }, 7000)
-    return () => clearInterval(interval)
-  }, [step, displayVisions.length, exploreOpen])
+      }, 700) // safely past the 0.6s CSS fade-out
+    },
+    [step, exploreOpen, selectedVision, displayVisions]
+  )
 
   // Live earth: add a geo-positioned, hue-colored light on every new contribution INSERT
   useEffect(() => {
@@ -807,6 +813,7 @@ export default function Journey({
         earthFill={earthFill}
         contributionCount={liveContributions}
         onLightClick={setSelectedVision}
+        onVisionRevealed={handleVisionRevealed}
       />
 
       <div

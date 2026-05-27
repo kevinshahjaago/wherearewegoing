@@ -76,6 +76,11 @@ type AnimState = {
   reducedMotion: boolean
   mode: EarthMode
   coastlines: [number, number][][]
+  frameCount: number
+  lastRevealFrame: number
+  highlightedVisionIdx: number | null
+  highlightAge: number
+  shownVisionIndices: Set<number>
 }
 
 export default function EarthCanvas({
@@ -83,15 +88,21 @@ export default function EarthCanvas({
   earthFill: initialFill = 0.36,
   contributionCount = 0,
   onLightClick,
+  onVisionRevealed,
 }: {
   ref?: Ref<EarthCanvasHandle>
   earthFill?: number
   contributionCount?: number
   onLightClick?: (vision: VisionItem | null) => void
+  onVisionRevealed?: (vision: VisionItem) => void
 }) {
   const starsRef = useRef<HTMLCanvasElement>(null)
   const earthRef = useRef<HTMLCanvasElement>(null)
   const flashEl = useRef<HTMLDivElement>(null)
+  const onVisionRevealedRef = useRef(onVisionRevealed)
+  useEffect(() => {
+    onVisionRevealedRef.current = onVisionRevealed
+  }, [onVisionRevealed])
   const anim = useRef<AnimState>({
     W: 0,
     H: 0,
@@ -110,6 +121,11 @@ export default function EarthCanvas({
     reducedMotion: false,
     mode: 'mission',
     coastlines: [],
+    frameCount: 0,
+    lastRevealFrame: 0,
+    highlightedVisionIdx: null,
+    highlightAge: 0,
+    shownVisionIndices: new Set<number>(),
   })
 
   useImperativeHandle(ref, () => ({
@@ -169,6 +185,11 @@ export default function EarthCanvas({
           projVisible: false,
         }
       })
+      // Mark index 0 as already shown — Journey displays it immediately on reveal
+      s.shownVisionIndices = new Set(visions.length > 0 ? [0] : [])
+      s.highlightedVisionIdx = null
+      s.highlightAge = 0
+      s.lastRevealFrame = s.frameCount
     },
     pulseUserLight(geo?: { lat: number; lng: number }, missionHue?: number, valuesHue?: number) {
       const s = anim.current
@@ -448,7 +469,8 @@ export default function EarthCanvas({
 
       // Vision lights — larger, pulsing, interactive (hit-testable)
       const visionPulse = s.reducedMotion ? 1 : 0.78 + 0.22 * Math.sin(s.glowT * 1.3)
-      for (const vl of s.visionLights) {
+      for (let vi = 0; vi < s.visionLights.length; vi++) {
+        const vl = s.visionLights[vi]
         const rt = vl.th + s.earthRot
         const sp = Math.sin(vl.ph2)
         const px = cx - R * sp * Math.cos(rt)
@@ -459,8 +481,12 @@ export default function EarthCanvas({
         vl.projVisible = depth >= -0.08
         if (!vl.projVisible) continue
         const vis = (depth + 0.08) / 1.08
-        const rad = 8 * (0.65 + 0.35 * vis) * visionPulse
-        const alpha = Math.min(0.95, 0.78 * vis + 0.15) * visionPulse
+        const isHighlighted = s.highlightedVisionIdx === vi
+        const highlightBoost = isHighlighted
+          ? 1 + 0.5 * Math.max(0, 1 - s.highlightAge / 90)
+          : 1
+        const rad = 8 * (0.65 + 0.35 * vis) * visionPulse * highlightBoost
+        const alpha = Math.min(0.95, 0.78 * vis + 0.15) * visionPulse * highlightBoost
         // Outer soft halo
         const gr = ctx.createRadialGradient(px, py, 0, px, py, rad * 5)
         gr.addColorStop(0, `hsla(${vl.missionHue},95%,96%,${alpha})`)
@@ -476,6 +502,55 @@ export default function EarthCanvas({
         ctx.arc(px, py, rad * 0.55, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`
         ctx.fill()
+        // Expanding reveal ring — plays for first ~1.5s after highlight
+        if (isHighlighted && !s.reducedMotion) {
+          const rp = Math.min(1, s.highlightAge / 90)
+          const ringR = rad * (1.2 + rp * 7) * vis
+          ctx.beginPath()
+          ctx.arc(px, py, ringR, 0, Math.PI * 2)
+          ctx.strokeStyle = `hsla(${vl.missionHue},85%,82%,${(1 - rp) * 0.55 * vis})`
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
+      }
+
+      // Reveal selection: pick the visible, unshown light with lowest depth (≈ just rotated into view)
+      const REVEAL_INTERVAL = 420 // ~7 s at 60 fps
+      s.frameCount++
+      if (s.highlightedVisionIdx !== null) {
+        s.highlightAge++
+        if (s.highlightAge > 300) s.highlightedVisionIdx = null
+      }
+      if (
+        s.visionLights.length > 0 &&
+        s.frameCount - s.lastRevealFrame >= REVEAL_INTERVAL
+      ) {
+        // Collect visible candidates with their depth
+        type Candidate = { idx: number; depth: number; vision: VisionItem }
+        const candidates: Candidate[] = []
+        for (let vi = 0; vi < s.visionLights.length; vi++) {
+          const vl = s.visionLights[vi]
+          if (!vl.projVisible) continue
+          const rt = vl.th + s.earthRot
+          const depth = Math.sin(vl.ph2) * Math.sin(rt)
+          if (depth < 0.05) continue // too close to horizon — unstable
+          candidates.push({ idx: vi, depth, vision: vl.vision })
+        }
+        if (candidates.length > 0) {
+          // Prefer unshown; sort ascending by depth so lowest (≈ just appeared) comes first
+          let pool = candidates.filter((c) => !s.shownVisionIndices.has(c.idx))
+          if (pool.length === 0) {
+            s.shownVisionIndices = new Set()
+            pool = candidates
+          }
+          pool.sort((a, b) => a.depth - b.depth)
+          const pick = pool[0]
+          s.highlightedVisionIdx = pick.idx
+          s.highlightAge = 0
+          s.lastRevealFrame = s.frameCount
+          s.shownVisionIndices.add(pick.idx)
+          onVisionRevealedRef.current?.(pick.vision)
+        }
       }
 
       // User's own light — pulsing highlight for ~8s after submit

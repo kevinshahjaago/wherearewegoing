@@ -83,6 +83,7 @@
   max-width: 460px;
   padding: 0 2rem;
   opacity: 0;
+  outline: none;
   transform: translateY(8px);
   transition:
     opacity 0.28s ease,
@@ -338,8 +339,14 @@
   padding: 0 2rem;
   margin-bottom: 0.5rem;
   opacity: 0;
-  transition: opacity 0.9s ease;
-  min-height: 2rem;
+  /* Shorter than the 700ms setTimeout gap — ensures text changes only while invisible */
+  transition: opacity 0.6s ease;
+  /* Fixed height prevents layout shift when text wraps to 2 lines on mobile */
+  min-height: 3.2rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cycleVoiceVisible {
