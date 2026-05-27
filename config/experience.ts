@@ -102,6 +102,7 @@ export const EXPERIENCE_CONFIG = {
       modeToggleValues: 'Values',
       exploreAll: 'Explore all visions',
       exploreCollapse: 'Show less',
+      touchHint: 'Touch a light · read their vision',
     },
     return: {
       line1: 'What is your mission',

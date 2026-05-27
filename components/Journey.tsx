@@ -89,6 +89,7 @@ export default function Journey({
   const [selectedVision, setSelectedVision] = useState<VisionItem | null>(null)
   const [selectedCluster, setSelectedCluster] = useState<VisionItem[]>([])
   const [selectedClusterIdx, setSelectedClusterIdx] = useState(0)
+  const [hasTappedLight, setHasTappedLight] = useState(false)
   const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
@@ -805,6 +806,7 @@ export default function Journey({
 
   const handleLightClick = useCallback((vision: VisionItem | null, cluster?: VisionItem[]) => {
     setSelectedVision(vision)
+    if (vision) setHasTappedLight(true)
     if (vision && cluster && cluster.length > 1) {
       setSelectedCluster(cluster)
       setSelectedClusterIdx(cluster.indexOf(vision))
@@ -996,6 +998,15 @@ export default function Journey({
         {step === 5 && (
           <p className={styles.hueHint} aria-label="Similar colors hold similar visions">
             Similar colors · similar visions
+          </p>
+        )}
+
+        {step === 5 && (
+          <p
+            className={`${styles.touchHint}${hasTappedLight ? ` ${styles.touchHintHidden}` : ''}`}
+            aria-hidden="true"
+          >
+            {copy.reveal.touchHint}
           </p>
         )}
 
