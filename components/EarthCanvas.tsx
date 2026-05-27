@@ -482,9 +482,7 @@ export default function EarthCanvas({
         if (!vl.projVisible) continue
         const vis = (depth + 0.08) / 1.08
         const isHighlighted = s.highlightedVisionIdx === vi
-        const highlightBoost = isHighlighted
-          ? 1 + 0.5 * Math.max(0, 1 - s.highlightAge / 90)
-          : 1
+        const highlightBoost = isHighlighted ? 1 + 0.5 * Math.max(0, 1 - s.highlightAge / 90) : 1
         const rad = 8 * (0.65 + 0.35 * vis) * visionPulse * highlightBoost
         const alpha = Math.min(0.95, 0.78 * vis + 0.15) * visionPulse * highlightBoost
         // Outer soft halo
@@ -521,10 +519,7 @@ export default function EarthCanvas({
         s.highlightAge++
         if (s.highlightAge > 300) s.highlightedVisionIdx = null
       }
-      if (
-        s.visionLights.length > 0 &&
-        s.frameCount - s.lastRevealFrame >= REVEAL_INTERVAL
-      ) {
+      if (s.visionLights.length > 0 && s.frameCount - s.lastRevealFrame >= REVEAL_INTERVAL) {
         // Collect visible candidates with their depth
         type Candidate = { idx: number; depth: number; vision: VisionItem }
         const candidates: Candidate[] = []
