@@ -387,6 +387,7 @@ export default function Journey({
 
   // Reveal the optional mission input after the user opts in.
   const openReturnInput = useCallback(() => {
+    setExploreOpen(false)
     setReturnInputOpen(true)
     transitionQuestion({ line1: copy.return.line1, line2: copy.return.line2 }, () =>
       showInput(randomPlaceholder(copy.return.placeholders), copy.return.label)
@@ -770,7 +771,7 @@ export default function Journey({
   // to a specific, visually-highlighted light on the globe.
   const handleVisionRevealed = useCallback(
     (vision: VisionItem) => {
-      if (step !== 5 || exploreOpen || selectedVision) return
+      if (step !== 5 || exploreOpen || selectedVision || returnInputOpen) return
       const idx = displayVisions.indexOf(vision)
       if (idx === -1) return
       setCycleVoiceVisible(false)
@@ -779,7 +780,7 @@ export default function Journey({
         setCycleVoiceVisible(true)
       }, 700) // safely past the 0.6s CSS fade-out
     },
-    [step, exploreOpen, selectedVision, displayVisions]
+    [step, exploreOpen, selectedVision, returnInputOpen, displayVisions]
   )
 
   // Live earth: add a geo-positioned, hue-colored light on every new contribution INSERT
@@ -936,9 +937,13 @@ export default function Journey({
           role="status"
           aria-live="polite"
           aria-label={copy.reveal.voicesRegionLabel}
-          className={`${styles.cycleVoice}${cycleVoiceVisible && !exploreOpen ? ` ${styles.cycleVoiceVisible}` : ''}`}
+          className={`${styles.cycleVoice}${(cycleVoiceVisible && !exploreOpen && !returnInputOpen) || returnInputOpen ? ` ${styles.cycleVoiceVisible}` : ''}`}
         >
-          {step === 5 && !exploreOpen ? `"${displayVisions[cycleVoiceIdx]?.mission ?? ''}"` : ''}
+          {step === 5 && returnInputOpen
+            ? copy.return.earthHolds
+            : step === 5 && !exploreOpen
+              ? `"${displayVisions[cycleVoiceIdx]?.mission ?? ''}"`
+              : ''}
         </div>
 
         {step === 5 && (
