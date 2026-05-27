@@ -844,6 +844,38 @@
   margin-top: 0.8rem;
 }
 
+.visionCardNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 0.9rem;
+}
+
+.visionCardNavBtn {
+  background: none;
+  border: none;
+  color: rgba(237, 232, 218, 0.55);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.visionCardNavBtn:hover {
+  color: rgba(237, 232, 218, 0.95);
+}
+
+.visionCardNavCount {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  color: rgba(237, 232, 218, 0.4);
+  min-width: 3rem;
+  text-align: center;
+}
+
 /* ── Opening disclosure (visible on arrival + mission steps only) ── */
 .disclosure {
   font-family: var(--font-dm-sans), sans-serif;

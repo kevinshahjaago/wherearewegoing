@@ -87,6 +87,8 @@ export default function Journey({
   const [principleCount, setPrincipleCount] = useState(0)
   const [contributorCount, setContributorCount] = useState(0)
   const [selectedVision, setSelectedVision] = useState<VisionItem | null>(null)
+  const [selectedCluster, setSelectedCluster] = useState<VisionItem[]>([])
+  const [selectedClusterIdx, setSelectedClusterIdx] = useState(0)
   const [exploreOpen, setExploreOpen] = useState(false)
   const [anchoredMission, setAnchoredMission] = useState('')
   const [yourMark, setYourMark] = useState('')
@@ -715,12 +717,30 @@ export default function Journey({
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
-      if (e.key === 'Escape') setSelectedVision(null)
+      if (e.key === 'Escape') {
+        setSelectedVision(null)
+        setSelectedCluster([])
+        setSelectedClusterIdx(0)
+      }
+      if (e.key === 'ArrowLeft' && selectedCluster.length > 1) {
+        setSelectedClusterIdx((i) => {
+          const next = (i - 1 + selectedCluster.length) % selectedCluster.length
+          setSelectedVision(selectedCluster[next])
+          return next
+        })
+      }
+      if (e.key === 'ArrowRight' && selectedCluster.length > 1) {
+        setSelectedClusterIdx((i) => {
+          const next = (i + 1) % selectedCluster.length
+          setSelectedVision(selectedCluster[next])
+          return next
+        })
+      }
       if ((e.key === 'r' || e.key === 'R') && step >= 5) goReturn()
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [step, goReturn])
+  }, [step, goReturn, selectedCluster])
 
   // Push the UI above the software keyboard on iOS and Android.
   // visualViewport.height shrinks when the keyboard opens; the difference is the
@@ -783,6 +803,33 @@ export default function Journey({
     [step, exploreOpen, selectedVision, returnInputOpen, displayVisions]
   )
 
+  const handleLightClick = useCallback((vision: VisionItem | null, cluster?: VisionItem[]) => {
+    setSelectedVision(vision)
+    if (vision && cluster && cluster.length > 1) {
+      setSelectedCluster(cluster)
+      setSelectedClusterIdx(cluster.indexOf(vision))
+    } else {
+      setSelectedCluster([])
+      setSelectedClusterIdx(0)
+    }
+  }, [])
+
+  const prevInCluster = useCallback(() => {
+    setSelectedClusterIdx((i) => {
+      const next = (i - 1 + selectedCluster.length) % selectedCluster.length
+      setSelectedVision(selectedCluster[next])
+      return next
+    })
+  }, [selectedCluster])
+
+  const nextInCluster = useCallback(() => {
+    setSelectedClusterIdx((i) => {
+      const next = (i + 1) % selectedCluster.length
+      setSelectedVision(selectedCluster[next])
+      return next
+    })
+  }, [selectedCluster])
+
   // Live earth: add a geo-positioned, hue-colored light on every new contribution INSERT
   useEffect(() => {
     const supabase = createClient()
@@ -813,7 +860,7 @@ export default function Journey({
         ref={earthRef}
         earthFill={earthFill}
         contributionCount={liveContributions}
-        onLightClick={setSelectedVision}
+        onLightClick={handleLightClick}
         onVisionRevealed={handleVisionRevealed}
       />
 
@@ -1208,6 +1255,27 @@ export default function Journey({
           <>
             <p className={styles.visionCardLabel}>Vision</p>
             <p className={styles.visionCardMission}>&ldquo;{selectedVision.mission}&rdquo;</p>
+            {selectedCluster.length > 1 && (
+              <div className={styles.visionCardNav}>
+                <button
+                  className={styles.visionCardNavBtn}
+                  onClick={prevInCluster}
+                  aria-label="Previous vision in this area"
+                >
+                  ←
+                </button>
+                <span className={styles.visionCardNavCount}>
+                  {selectedClusterIdx + 1} / {selectedCluster.length}
+                </span>
+                <button
+                  className={styles.visionCardNavBtn}
+                  onClick={nextInCluster}
+                  aria-label="Next vision in this area"
+                >
+                  →
+                </button>
+              </div>
+            )}
             {selectedVision.principles.length > 0 && (
               <>
                 <p className={styles.visionCardLabel}>Principles</p>

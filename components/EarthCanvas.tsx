@@ -93,7 +93,7 @@ export default function EarthCanvas({
   ref?: Ref<EarthCanvasHandle>
   earthFill?: number
   contributionCount?: number
-  onLightClick?: (vision: VisionItem | null) => void
+  onLightClick?: (vision: VisionItem | null, cluster?: VisionItem[]) => void
   onVisionRevealed?: (vision: VisionItem) => void
 }) {
   const starsRef = useRef<HTMLCanvasElement>(null)
@@ -667,7 +667,22 @@ export default function EarthCanvas({
       }
     }
     if (closest) {
-      onLightClick?.(closest.vision)
+      // Collect all visible lights within cluster radius, sorted closest-first
+      const CLUSTER_RADIUS = 70
+      const cluster = s.visionLights
+        .filter((vl) => {
+          if (!vl.projVisible) return false
+          const dx = vl.projX - cx,
+            dy = vl.projY - cy
+          return Math.sqrt(dx * dx + dy * dy) < CLUSTER_RADIUS
+        })
+        .sort((a, b) => {
+          const da = Math.sqrt((a.projX - cx) ** 2 + (a.projY - cy) ** 2)
+          const db = Math.sqrt((b.projX - cx) ** 2 + (b.projY - cy) ** 2)
+          return da - db
+        })
+        .map((vl) => vl.vision)
+      onLightClick?.(closest.vision, cluster)
       return
     }
 
