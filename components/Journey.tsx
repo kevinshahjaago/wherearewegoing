@@ -8,6 +8,7 @@ import { getGeolocation } from '@/lib/geolocation'
 import { createClient } from '@/lib/supabase/client'
 import EarthCanvas, { type EarthCanvasHandle } from './EarthCanvas'
 import type { VisionItem } from '@/lib/services/earth'
+import type { Theme } from '@/lib/services/themes'
 import styles from './Journey.module.css'
 
 const CLIENT_PRINCIPLE_HUES: Record<string, number> = {
@@ -114,6 +115,7 @@ export default function Journey({
     explanation: string
   } | null>(null)
   const [shareExpanded, setShareExpanded] = useState(false)
+  const [themes, setThemes] = useState<Theme[]>([])
 
   const earthRef = useRef<EarthCanvasHandle>(null)
   const questionRef = useRef<HTMLDivElement>(null)
@@ -856,6 +858,17 @@ export default function Journey({
     }
   }, [])
 
+  // Fetch thematic groupings once the reveal screen is reached (step 5)
+  useEffect(() => {
+    if (step !== 5 || themes.length > 0) return
+    fetch('/api/themes')
+      .then((r) => (r.ok ? (r.json() as Promise<{ themes: Theme[] }>) : null))
+      .then((data) => {
+        if (data?.themes?.length) setThemes(data.themes)
+      })
+      .catch(() => undefined)
+  }, [step, themes.length])
+
   return (
     <>
       <EarthCanvas
@@ -1046,6 +1059,18 @@ export default function Journey({
           aria-label={copy.reveal.voicesRegionLabel}
           className={`${styles.exploreList}${exploreOpen && realVisions.length > 0 ? ` ${styles.exploreListVisible}` : ''}`}
         >
+          {themes.length > 0 && (
+            <div className={styles.themesSection}>
+              <p className={styles.themesHeading}>What people care about</p>
+              <div className={styles.themesList}>
+                {themes.map((t) => (
+                  <span key={t.label} className={styles.themesPill}>
+                    {t.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {realVisions.map((v, i) => (
             <div key={i} className={styles.exploreItem}>
               <span
