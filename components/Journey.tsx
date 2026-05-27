@@ -999,13 +999,11 @@ export default function Journey({
           role="status"
           aria-live="polite"
           aria-label={copy.reveal.voicesRegionLabel}
-          className={`${styles.cycleVoice}${(cycleVoiceVisible && !exploreOpen && !returnInputOpen) || returnInputOpen ? ` ${styles.cycleVoiceVisible}` : ''}`}
+          className={`${styles.cycleVoice}${cycleVoiceVisible && !exploreOpen && !returnInputOpen ? ` ${styles.cycleVoiceVisible}` : ''}`}
         >
-          {step === 5 && returnInputOpen
-            ? copy.return.earthHolds
-            : step === 5 && !exploreOpen
-              ? `"${displayVisions[cycleVoiceIdx]?.mission ?? ''}"`
-              : ''}
+          {step === 5 && !exploreOpen && !returnInputOpen
+            ? `"${displayVisions[cycleVoiceIdx]?.mission ?? ''}"`
+            : ''}
         </div>
 
         {step === 5 && (
